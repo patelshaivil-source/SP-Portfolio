@@ -21,6 +21,14 @@ export default function Overlay() {
           <p className="mt-4 text-xl text-zinc-400 md:text-2xl">
             AI Generalist & Systems Developer
           </p>
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+            className="mt-16 flex flex-col items-center gap-2 font-mono text-xs tracking-[0.3em] text-zinc-500"
+          >
+            <span>SCROLL TO EXPLORE</span>
+            <span className="text-[#0500FF]">&#8595;</span>
+          </motion.div>
         </motion.div>
       </section>
       {/* Section 2: Projects Showcase */}
