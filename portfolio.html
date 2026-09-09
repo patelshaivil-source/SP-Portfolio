@@ -4250,7 +4250,12 @@ section{position:relative;}
     var QUAT_ARM_Y = new THREE.Quaternion(); // identity
     var QUAT_ARM_Z = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), Math.PI/2);
 
-    var armXMesh = null, armYMesh = null, armZMesh = null, hubMesh = null;
+    var armXMesh = null, armYMesh = null, armZMesh = null, hubMesh = null, holeMesh = null;
+    // Bore-hole sockets recessed into each arm's two end caps -- the
+    // reference's jacks read as hollow tube stock, not solid rods, and
+    // that hollow socket at every tip is what sells it. Sized/positioned
+    // relative to armLen/armRadius once buildGrid() computes those.
+    var HOLE_RADIUS = 0, HOLE_DEPTH = 0, HOLE_OFFSET = 0;
     var cubes = []; // one entry per "jack": {baseX, baseY, baseZ, z, rotX, rotY, scale, scaleTarget, colorIndex, idlePhase, idleSpeed}
     var w = 0, h = 0;
     // Free-floating drift: each jack has its own slow velocity and just
@@ -4299,14 +4304,40 @@ section{position:relative;}
     }
     var IDENTITY_Q = new THREE.Quaternion();
 
+    // One dark bore-hole cylinder inset at each of an arm's two tips.
+    // Positioned by rotating a local offset of HOLE_OFFSET along Y by the
+    // same combined (wobble * baseQuat) rotation the arm mesh itself uses,
+    // so the hole always sits flush with that arm's actual end cap.
+    var _holeLocal = new THREE.Vector3();
+    function writeHoleInstance(idx, baseQuat, sign, cu){
+      _euler.set(cu.rotX, cu.rotY, cu.spinZ);
+      _wobbleQuat.setFromEuler(_euler);
+      if(baseQuat) _finalQuat.copy(_wobbleQuat).multiply(baseQuat);
+      else _finalQuat.copy(_wobbleQuat);
+      _holeLocal.set(0, sign*HOLE_OFFSET, 0).applyQuaternion(_finalQuat);
+      _pos.set(cu.baseX, cu.baseY, cu.z).add(_holeLocal);
+      _scale.setScalar(cu.scale);
+      _m4.compose(_pos, _finalQuat, _scale);
+      holeMesh.setMatrixAt(idx, _m4);
+    }
+    function writeHoles(i, cu){
+      var base = i*6;
+      writeHoleInstance(base+0, QUAT_ARM_X, 1, cu);
+      writeHoleInstance(base+1, QUAT_ARM_X, -1, cu);
+      writeHoleInstance(base+2, QUAT_ARM_Y, 1, cu);
+      writeHoleInstance(base+3, QUAT_ARM_Y, -1, cu);
+      writeHoleInstance(base+4, QUAT_ARM_Z, 1, cu);
+      writeHoleInstance(base+5, QUAT_ARM_Z, -1, cu);
+    }
+
     function disposeGrid(){
-      [armXMesh, armYMesh, armZMesh, hubMesh].forEach(function(mesh){
+      [armXMesh, armYMesh, armZMesh, hubMesh, holeMesh].forEach(function(mesh){
         if(!mesh) return;
         scene.remove(mesh);
         mesh.geometry.dispose();
         mesh.material.dispose();
       });
-      armXMesh = armYMesh = armZMesh = hubMesh = null;
+      armXMesh = armYMesh = armZMesh = hubMesh = holeMesh = null;
       cubes = [];
     }
 
@@ -4357,11 +4388,22 @@ section{position:relative;}
           envMapIntensity: 1.1
         });
       }
+      // Bore holes: a short dark matte cylinder recessed at each of an
+      // arm's two tips, flush with the outer face. Deliberately not
+      // glossy plastic like the arms -- a plain dark matte reads as a
+      // hollow socket instead of another solid piece.
+      HOLE_RADIUS = armRadius * 0.55;
+      HOLE_DEPTH = armRadius * 0.9;
+      HOLE_OFFSET = armLen/2 - HOLE_DEPTH/2;
+      var holeGeo = new THREE.CylinderGeometry(HOLE_RADIUS, HOLE_RADIUS, HOLE_DEPTH, 16, 1, false);
+      var holeMat = new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 0.95, metalness: 0 });
+
       armXMesh = new THREE.InstancedMesh(armGeo, plasticMat(), count);
       armYMesh = new THREE.InstancedMesh(armGeo, plasticMat(), count);
       armZMesh = new THREE.InstancedMesh(armGeo, plasticMat(), count);
       hubMesh  = new THREE.InstancedMesh(hubGeo, plasticMat(), count);
-      [armXMesh, armYMesh, armZMesh, hubMesh].forEach(function(mesh){
+      holeMesh = new THREE.InstancedMesh(holeGeo, holeMat, count*6);
+      [armXMesh, armYMesh, armZMesh, hubMesh, holeMesh].forEach(function(mesh){
         mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         scene.add(mesh);
       });
@@ -4412,12 +4454,14 @@ section{position:relative;}
           writeInstance(armYMesh, QUAT_ARM_Y, i, cu);
           writeInstance(armZMesh, QUAT_ARM_Z, i, cu);
           writeHub(i, cu);
+          writeHoles(i, cu);
         }
       }
       [armXMesh, armYMesh, armZMesh, hubMesh].forEach(function(mesh){
         mesh.instanceMatrix.needsUpdate = true;
         mesh.instanceColor.needsUpdate = true;
       });
+      holeMesh.instanceMatrix.needsUpdate = true;
     }
 
     function resize(){
@@ -4500,6 +4544,7 @@ section{position:relative;}
           writeInstance(armYMesh, QUAT_ARM_Y, ci, cu);
           writeInstance(armZMesh, QUAT_ARM_Z, ci, cu);
           writeHub(ci, cu);
+          writeHoles(ci, cu);
         }
       }
       if(!anyClickable) return;
@@ -4512,6 +4557,7 @@ section{position:relative;}
         armYMesh.instanceMatrix.needsUpdate = true;
         armZMesh.instanceMatrix.needsUpdate = true;
         hubMesh.instanceMatrix.needsUpdate = true;
+        holeMesh.instanceMatrix.needsUpdate = true;
         renderer.render(scene, camera); // static mode still needs a manual repaint
       }
     });
@@ -4568,11 +4614,13 @@ section{position:relative;}
         writeInstance(armYMesh, QUAT_ARM_Y, i, cu);
         writeInstance(armZMesh, QUAT_ARM_Z, i, cu);
         writeHub(i, cu);
+        writeHoles(i, cu);
       }
       armXMesh.instanceMatrix.needsUpdate = true;
       armYMesh.instanceMatrix.needsUpdate = true;
       armZMesh.instanceMatrix.needsUpdate = true;
       hubMesh.instanceMatrix.needsUpdate = true;
+      holeMesh.instanceMatrix.needsUpdate = true;
       if(anyColorChanged){
         armXMesh.instanceColor.needsUpdate = true;
         armYMesh.instanceColor.needsUpdate = true;
