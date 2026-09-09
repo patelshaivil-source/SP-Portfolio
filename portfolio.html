@@ -264,6 +264,7 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
   position:absolute; left:4vw; top:50%; transform:translateY(-48%);
   height:82vh; width:auto; max-width:70vw; object-fit:contain;
   z-index:1; pointer-events:none; user-select:none; display:none;
+  opacity:var(--hero-photo-opacity, 0); transition:opacity 200ms linear;
 }
 @media (max-width:900px){
   .hero-photo-static{ left:50%; top:36%; transform:translate(-50%,-36%); height:44vh; max-width:88vw; }
@@ -2332,7 +2333,7 @@ section{position:relative;}
       profileBio.style.setProperty('--profile-bio-opacity',1);
       if(heroCenter) heroCenter.style.display='none'; else scrollCue.style.display='none';
       var heroPhotoStaticElReduced = document.getElementById('heroPhotoStatic');
-      if(heroPhotoStaticElReduced){ heroPhotoStaticElReduced.src = PORTRAIT_IMG_SRC; heroPhotoStaticElReduced.style.display = 'block'; }
+      if(heroPhotoStaticElReduced){ heroPhotoStaticElReduced.src = PORTRAIT_IMG_SRC; heroPhotoStaticElReduced.style.display = 'block'; heroPhotoStaticElReduced.style.setProperty('--hero-photo-opacity', 1); }
       return;
     }
     if(!window.THREE){
@@ -2349,7 +2350,7 @@ section{position:relative;}
       profileBio.style.setProperty('--profile-bio-opacity',1);
       if(heroCenter) heroCenter.style.display='none'; else scrollCue.style.display='none';
       var heroPhotoStaticElNoThree = document.getElementById('heroPhotoStatic');
-      if(heroPhotoStaticElNoThree){ heroPhotoStaticElNoThree.src = PORTRAIT_IMG_SRC; heroPhotoStaticElNoThree.style.display = 'block'; }
+      if(heroPhotoStaticElNoThree){ heroPhotoStaticElNoThree.src = PORTRAIT_IMG_SRC; heroPhotoStaticElNoThree.style.display = 'block'; heroPhotoStaticElNoThree.style.setProperty('--hero-photo-opacity', 1); }
       return;
     }
     var w,h,dpr;
@@ -2730,13 +2731,15 @@ section{position:relative;}
         console.error('[photoRelief] build failed:', err);
       }
     }
-    // Sculpted 3D bust (generated externally on Meshy from the same photo,
-    // decimated from ~1.96M to 60k triangles and re-centered/normalized
-    // here) replaces both the earlier baked-plane relief and the flat
-    // photo fallback -- reaching this point means reduced-motion/no-THREE
-    // already returned above with the flat photo, so it's always safe to
-    // load the real sculpted mesh here.
-    buildPhotoRelief();
+    // Reverted per request: no 3D object in the hero at all (neither the
+    // baked-plane shader relief nor the sculpted Meshy bust) -- back to
+    // just the flat portrait photo, same image the reduced-motion/no-THREE
+    // fallback branches above already show.
+    (function showFlatHeroPhoto(){
+      var el = document.getElementById('heroPhotoStatic');
+      if(el){ el.src = PORTRAIT_IMG_SRC; el.style.display = 'block'; }
+    })();
+    // buildPhotoRelief(); -- disabled; see above.
 
     function sstep(e0,e1,x){ var t = clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); }
 
@@ -3244,6 +3247,10 @@ section{position:relative;}
       // the name and 3D bust only fade in once you actually scroll.
       var headingOpacity = clamp((progress-0.10)/0.15,0,1) * exitFade;
       profileHeading.style.setProperty('--profile-heading-opacity', headingOpacity.toFixed(3));
+      // Flat hero photo fades in alongside the name (same gating as the
+      // name, now that there's no WebGL relief/bust driving its own fade).
+      var heroPhotoStaticEl = document.getElementById('heroPhotoStatic');
+      if(heroPhotoStaticEl) heroPhotoStaticEl.style.setProperty('--hero-photo-opacity', headingOpacity.toFixed(3));
       // Hero profile: name/role/monogram card arrives as the portrait
       // nears full resolution, its progress bar mirroring the portrait's
       // own formation arc, and both hold through .85.
