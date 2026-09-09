@@ -3239,7 +3239,10 @@ section{position:relative;}
       var markersOpacity = clamp((progress-0.20)/0.16, 0, 1) * exitFade;
       heroMarkers.style.setProperty('--markers-opacity', markersOpacity.toFixed(3));
       // Foundation: "PROFILE / [[ 001 ]]" establishes context first.
-      var headingOpacity = exitFade;
+      // Gated on scroll like the cue/markers/bust -- landing on the page
+      // shows only "WELCOME! / Scroll to explore" (the old behavior);
+      // the name and 3D bust only fade in once you actually scroll.
+      var headingOpacity = clamp((progress-0.10)/0.15,0,1) * exitFade;
       profileHeading.style.setProperty('--profile-heading-opacity', headingOpacity.toFixed(3));
       // Hero profile: name/role/monogram card arrives as the portrait
       // nears full resolution, its progress bar mirroring the portrait's
