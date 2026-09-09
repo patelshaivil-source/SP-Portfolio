@@ -4394,7 +4394,13 @@ section{position:relative;}
       // hollow socket instead of another solid piece.
       HOLE_RADIUS = armRadius * 0.55;
       HOLE_DEPTH = armRadius * 0.9;
-      HOLE_OFFSET = armLen/2 - HOLE_DEPTH/2;
+      // Recessed slightly *behind* the arm's own end cap (not flush with
+      // it) -- placing the two flat, coplanar circular caps at the exact
+      // same depth causes z-fighting between their triangle fans, which
+      // rendered as a flickery black starburst/asterisk instead of a
+      // clean round hole. A small inward epsilon keeps the hole's face
+      // strictly behind the arm's face so only the hole wins that pixel.
+      HOLE_OFFSET = armLen/2 - HOLE_DEPTH/2 - armRadius * 0.12;
       var holeGeo = new THREE.CylinderGeometry(HOLE_RADIUS, HOLE_RADIUS, HOLE_DEPTH, 16, 1, false);
       var holeMat = new THREE.MeshStandardMaterial({ color: 0x08080a, roughness: 0.95, metalness: 0 });
 
