@@ -3111,7 +3111,11 @@ section{position:relative;}
       camera.lookAt(0,0,0);
       // Keep the hero portrait composed like a studio bust. A cumulative rotation
       // made the head orbit out of frame after a few seconds/while scrolling.
-      const idleYaw = Math.sin(elapsed * 0.12) * 0.008;
+      // Bigger, clearly-visible idle sway (per reference video: the bust
+      // slowly turns side to side on its own, not just a barely-there
+      // pointer-linked twitch) -- amplitude raised from 0.008 to 0.35 rad
+      // (~20 degrees) at a slow period so it reads as a deliberate turn.
+      const idleYaw = Math.sin(elapsed * 0.25) * 0.35;
       rig.rotation.y = lerp(rig.rotation.y, idleYaw + pointer.x * 0.025, Math.min(1, dt*2));
       rig.rotation.x = lerp(rig.rotation.x, pointer.y * 0.02, Math.min(1, dt*2));
       rig.rotation.z = lerp(rig.rotation.z, -pointer.x * 0.01, Math.min(1, dt*2));
@@ -3185,17 +3189,16 @@ section{position:relative;}
         var vFOV2 = camera.fov * Math.PI/180;
         var visH2 = 2 * Math.tan(vFOV2/2) * Math.abs(camZ2);
         var visW2 = visH2 * camera.aspect;
-        // Bigger and lower than before, per reference: head near the top
-        // of the frame with real headroom, shoulders cropped near the
-        // bottom edge, roughly centered (very slight left bias so it
-        // doesn't fight the name text on the right).
-        var reliefScale = visH2 * (isMobile ? 0.55 : 0.62);
+        // Smaller and pushed toward the upper-left, with generous empty
+        // space around it, per the reference recording (the bust sits
+        // well clear of the frame edges rather than filling it).
+        var reliefScale = visH2 * (isMobile ? 0.4 : 0.46);
         var breathe2 = 1 + Math.sin(elapsed*0.18)*0.012;
         photoReliefGroup.scale.setScalar(reliefScale * breathe2);
         var driftPx2 = Math.sin(elapsed*0.12) * visW2 * 0.008;
-        photoReliefGroup.position.x = (isMobile ? 0 : -visW2*0.06) + driftPx2 + pointer.x*0.16;
+        photoReliefGroup.position.x = (isMobile ? 0 : -visW2*0.18) + driftPx2 + pointer.x*0.16;
         var hover2 = Math.sin(elapsed*0.35) * visH2 * 0.008;
-        photoReliefGroup.position.y = -visH2*0.16 - pointer.y*0.1 + hover2;
+        photoReliefGroup.position.y = visH2*0.05 - pointer.y*0.1 + hover2;
         photoReliefGroup.position.z = 0;
         // Fade in across the same "Foundation -> Portrait form" window the
         // rest of the identity content uses, hold through the profile
