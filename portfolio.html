@@ -4396,7 +4396,11 @@ section{position:relative;}
             colorFrom: initialColor.clone(),
             colorTo: initialColor.clone(),
             colorT: 1,
-            paletteIndex: -1
+            // Clickable jacks already start at CLICK_PALETTE[0] (ACCENT),
+            // so this must start at 0, not -1 -- otherwise the first click
+            // computes (-1+1)%len = 0 and "advances" to the same color it
+            // already is, making the first click look like it did nothing.
+            paletteIndex: 0
           };
           cubes.push(cu);
           writeColorInstance(i, cu.color);
