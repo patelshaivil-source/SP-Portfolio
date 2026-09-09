@@ -2479,7 +2479,11 @@ section{position:relative;}
     // plane that visually anchors the floating portrait without becoming
     // a literal copy of the reference.
     ground.position.y = -4.35;
-    rig.add(ground);
+    // Removed per request: the wavy contour-line "ground" at the bottom of
+    // the hero. Left the generation/update code above and below intact
+    // (update loop just runs against a detached object now) rather than
+    // ripping it all out, to keep this a one-line, low-risk change.
+    // rig.add(ground);
     // One traveling light pulse per row, each with its own speed/width/
     // phase so the terrain reads as many independent currents of light
     // rather than a single synced sweep.
@@ -2518,7 +2522,7 @@ section{position:relative;}
     groundGlow.rotation.x = -Math.PI/2 + 0.09;
     groundGlow.position.set(0, -5.62, -2.2);
     groundGlow.position.y = -4.42;
-    rig.add(groundGlow);
+    // rig.add(groundGlow); -- removed along with `ground` above.
     /* --------------------------------------------------------------
        ZERO-GRAVITY STARS — a small set of individually glowing points
        with genuine independent random-walk drift (a wandering velocity
@@ -3181,13 +3185,17 @@ section{position:relative;}
         var vFOV2 = camera.fov * Math.PI/180;
         var visH2 = 2 * Math.tan(vFOV2/2) * Math.abs(camZ2);
         var visW2 = visH2 * camera.aspect;
-        var reliefScale = visH2 * (isMobile ? 0.38 : 0.43);
+        // Bigger and lower than before, per reference: head near the top
+        // of the frame with real headroom, shoulders cropped near the
+        // bottom edge, roughly centered (very slight left bias so it
+        // doesn't fight the name text on the right).
+        var reliefScale = visH2 * (isMobile ? 0.55 : 0.62);
         var breathe2 = 1 + Math.sin(elapsed*0.18)*0.012;
         photoReliefGroup.scale.setScalar(reliefScale * breathe2);
         var driftPx2 = Math.sin(elapsed*0.12) * visW2 * 0.008;
-        photoReliefGroup.position.x = (isMobile ? 0 : -visW2*0.08) + driftPx2 + pointer.x*0.16;
+        photoReliefGroup.position.x = (isMobile ? 0 : -visW2*0.06) + driftPx2 + pointer.x*0.16;
         var hover2 = Math.sin(elapsed*0.35) * visH2 * 0.008;
-        photoReliefGroup.position.y = visH2*0.10 - pointer.y*0.1 + hover2;
+        photoReliefGroup.position.y = -visH2*0.16 - pointer.y*0.1 + hover2;
         photoReliefGroup.position.z = 0;
         // Fade in across the same "Foundation -> Portrait form" window the
         // rest of the identity content uses, hold through the profile
