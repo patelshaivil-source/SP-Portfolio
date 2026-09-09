@@ -4194,14 +4194,18 @@ section{position:relative;}
     var section = document.getElementById('work');
     if(!canvas || !section || typeof THREE === 'undefined') return;
 
-    var ACCENT = 0xB4E619, GREY = 0x6E7278, BLACK_C = 0x0d0d10;
+    // More saturated/punchier than before -- the old ACCENT and blue read
+    // pale next to the click palette's red under this scene's lighting;
+    // same hues, just pushed to full saturation so they carry the same
+    // visual weight as the red instead of looking washed out.
+    var ACCENT = 0xAEEA00, GREY = 0x6E7278, BLACK_C = 0x0d0d10;
     // Resting palette: accent (click-reactive) now shows up 4-in-10 (40%),
     // grey and black split the remaining 60% evenly.
     var BASE_COLORS = [ACCENT, ACCENT, ACCENT, ACCENT, GREY, GREY, GREY, BLACK_C, BLACK_C, BLACK_C];
     // Click palette: bright, saturated green, yellow, blue, orange — matched
     // to the glossy-plastic reference look. Green reuses the site's own
     // neon-lime ACCENT so it reads as the "home" color for these jacks.
-    var CLICK_PALETTE = [ACCENT, 0xE00000, 0x3355FF, 0xFFD400]; // green, red, blue, yellow
+    var CLICK_PALETTE = [ACCENT, 0xE00000, 0x2247FF, 0xFFD400]; // green, red, blue, yellow -- blue pushed more saturated/pure to match red's punch
     var COLOR_TWEEN_DURATION = 0.5; // seconds, within the requested 0.4-0.6s window
     function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
     var lowPower = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
