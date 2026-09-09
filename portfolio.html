@@ -357,16 +357,16 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
    on top of the code-rain/portrait scene, faded out together with scroll
    via the same --cue-opacity var the cue already used. */
 .hero-center{
-  position:absolute; left:50%; bottom:3.5vh; top:auto; transform:translateX(-50%);
-  z-index:3; display:flex; flex-direction:column; align-items:center; gap:.8em;
+  position:absolute; left:50%; top:50%; bottom:auto; transform:translate(-50%,-50%);
+  z-index:3; display:flex; flex-direction:column; align-items:center; gap:1.4em;
   pointer-events:none; text-align:center;
   opacity:var(--cue-opacity, 1); transition:opacity 200ms linear;
 }
 .hero-welcome-text{
   display:block; width:100%; text-align:center;
   font-family:var(--font-mono); font-weight:400; text-transform:uppercase;
-  font-size:.68rem; line-height:1.2; color:var(--accent); letter-spacing:.18em;
-  text-shadow:0 0 16px rgba(207,255,46,.25); animation:welcomeBlink 3.6s ease-in-out infinite;
+  font-size:clamp(2.6rem, 8vw, 6rem); line-height:1.1; color:var(--accent); letter-spacing:.14em;
+  text-shadow:0 0 32px rgba(207,255,46,.3); animation:welcomeBlink 3.6s ease-in-out infinite;
 }
 /* A real fade to fully transparent and back — not a hard on/off snap —
    holding briefly at each end so both the "on" and fully-invisible states
@@ -2333,7 +2333,8 @@ section{position:relative;}
       profileBio.style.setProperty('--profile-bio-opacity',1);
       if(heroCenter) heroCenter.style.display='none'; else scrollCue.style.display='none';
       var heroPhotoStaticElReduced = document.getElementById('heroPhotoStatic');
-      if(heroPhotoStaticElReduced){ heroPhotoStaticElReduced.src = PORTRAIT_IMG_SRC; heroPhotoStaticElReduced.style.display = 'block'; heroPhotoStaticElReduced.style.setProperty('--hero-photo-opacity', 1); }
+      // Image removed per request -- hero shows just the name/text now.
+      // if(heroPhotoStaticElReduced){ heroPhotoStaticElReduced.src = PORTRAIT_IMG_SRC; heroPhotoStaticElReduced.style.display = 'block'; heroPhotoStaticElReduced.style.setProperty('--hero-photo-opacity', 1); }
       return;
     }
     if(!window.THREE){
@@ -2350,7 +2351,8 @@ section{position:relative;}
       profileBio.style.setProperty('--profile-bio-opacity',1);
       if(heroCenter) heroCenter.style.display='none'; else scrollCue.style.display='none';
       var heroPhotoStaticElNoThree = document.getElementById('heroPhotoStatic');
-      if(heroPhotoStaticElNoThree){ heroPhotoStaticElNoThree.src = PORTRAIT_IMG_SRC; heroPhotoStaticElNoThree.style.display = 'block'; heroPhotoStaticElNoThree.style.setProperty('--hero-photo-opacity', 1); }
+      // Image removed per request -- hero shows just the name/text now.
+      // if(heroPhotoStaticElNoThree){ heroPhotoStaticElNoThree.src = PORTRAIT_IMG_SRC; heroPhotoStaticElNoThree.style.display = 'block'; heroPhotoStaticElNoThree.style.setProperty('--hero-photo-opacity', 1); }
       return;
     }
     var w,h,dpr;
@@ -2731,14 +2733,15 @@ section{position:relative;}
         console.error('[photoRelief] build failed:', err);
       }
     }
-    // Reverted per request: no 3D object in the hero at all (neither the
-    // baked-plane shader relief nor the sculpted Meshy bust) -- back to
-    // just the flat portrait photo, same image the reduced-motion/no-THREE
-    // fallback branches above already show.
-    (function showFlatHeroPhoto(){
-      var el = document.getElementById('heroPhotoStatic');
-      if(el){ el.src = PORTRAIT_IMG_SRC; el.style.display = 'block'; }
-    })();
+    // Image removed per request: the hero shows no photo/3D object at all
+    // now, just the name/role text and the existing particle/code-rain
+    // background. Left the disabled calls below (rather than deleting the
+    // functions) so restoring either the flat photo or the 3D bust later
+    // is a one-line uncomment.
+    // (function showFlatHeroPhoto(){
+    //   var el = document.getElementById('heroPhotoStatic');
+    //   if(el){ el.src = PORTRAIT_IMG_SRC; el.style.display = 'block'; }
+    // })();
     // buildPhotoRelief(); -- disabled; see above.
 
     function sstep(e0,e1,x){ var t = clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); }
