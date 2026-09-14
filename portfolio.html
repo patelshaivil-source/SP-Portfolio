@@ -2749,6 +2749,170 @@ section{position:relative;}
         console.error('[photoRelief] build failed:', err);
       }
     }
+    /* ======================================================================
+       DESK CHARACTER -- an original "monitor for a head" figure (inspired
+       by, not copied from, a reference video the user shared -- that
+       video's specific character/composition/branding belongs to its own
+       creator) built entirely from primitives, sitting at a small desk.
+       Fully authored (not a scanned mesh), so unlike the earlier walker
+       experiment this one has a real hierarchical rig -- shoulder/elbow
+       groups for the waving arm -- with no seam-cutting compromises.
+       Sequence: slides in from off-screen left onto its desk, the
+       monitor "wakes up" showing Shaivil's actual photo once it arrives,
+       then the arm raises and waves alongside a "Hi!" sprite.
+       ====================================================================== */
+    var deskGroup = null, screenMat = null, screenGlowMat = null;
+    var waveShoulder = null, deskHiSprite = null, deskHiSpriteMat = null;
+    function buildDeskCharacter(){
+      try{
+        deskGroup = new THREE.Group();
+
+        function plasticMat(color, extra){
+          var opts = Object.assign({color:color, roughness:.32, metalness:0, clearcoat:.7, clearcoatRoughness:.25}, extra||{});
+          return new THREE.MeshPhysicalMaterial(opts);
+        }
+        var DARK = 0x1b1b1e, MID = 0x2a2a30;
+
+        // Desk: a slab top on four thin legs, plus a keyboard block.
+        var desk = new THREE.Group();
+        var topGeo = new THREE.BoxGeometry(1.7, 0.06, 0.75);
+        var topMesh = new THREE.Mesh(topGeo, plasticMat(MID, {roughness:.5, clearcoat:.2}));
+        topMesh.position.y = 0.55;
+        desk.add(topMesh);
+        var legGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.55, 10);
+        var legMat = plasticMat(0x111113, {roughness:.6, clearcoat:0});
+        [[-0.78,-0.32],[0.78,-0.32],[-0.78,0.32],[0.78,0.32]].forEach(function(p){
+          var leg = new THREE.Mesh(legGeo, legMat);
+          leg.position.set(p[0], 0.275, p[1]);
+          desk.add(leg);
+        });
+        var kbGeo = new THREE.BoxGeometry(0.5, 0.03, 0.18);
+        var kbMesh = new THREE.Mesh(kbGeo, plasticMat(0x0d0d10, {roughness:.55, clearcoat:.1}));
+        kbMesh.position.set(0, 0.595, 0.22);
+        desk.add(kbMesh);
+        deskGroup.add(desk);
+
+        // Torso: seated behind the desk, mostly a simple rounded column --
+        // legs aren't modeled since the desk hides them anyway.
+        var torsoGeo = new THREE.CylinderGeometry(0.15, 0.19, 0.46, 20);
+        var torsoMesh = new THREE.Mesh(torsoGeo, plasticMat(DARK));
+        torsoMesh.position.set(0, 0.78, -0.05);
+        deskGroup.add(torsoMesh);
+
+        // Neck + monitor head: a bezel box with a front-facing screen
+        // plane. The screen starts fully dark (screenMat.opacity 0) and
+        // fades in Shaivil's photo once the figure arrives (see draw()).
+        var neckGeo = new THREE.CylinderGeometry(0.045, 0.055, 0.12, 12);
+        var neckMesh = new THREE.Mesh(neckGeo, plasticMat(0x111113));
+        neckMesh.position.set(0, 1.06, -0.05);
+        deskGroup.add(neckMesh);
+
+        var bezelGeo = new THREE.BoxGeometry(0.42, 0.36, 0.10);
+        var bezelMesh = new THREE.Mesh(bezelGeo, plasticMat(0x0d0d10, {roughness:.4}));
+        bezelMesh.position.set(0, 1.34, -0.05);
+        deskGroup.add(bezelMesh);
+
+        // Thin accent-lime rim just behind the bezel -- the "light up"
+        // moment brightens this alongside the screen turning on.
+        var glowGeo = new THREE.PlaneGeometry(0.48, 0.42);
+        screenGlowMat = new THREE.MeshBasicMaterial({color:0xcfff2e, transparent:true, opacity:0});
+        var glowMesh = new THREE.Mesh(glowGeo, screenGlowMat);
+        glowMesh.position.set(0, 1.34, -0.095);
+        deskGroup.add(glowMesh);
+
+        var screenGeo = new THREE.PlaneGeometry(0.34, 0.28);
+        screenMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0});
+        if(typeof PORTRAIT_IMG_SRC === 'string'){
+          new THREE.TextureLoader().load(PORTRAIT_IMG_SRC, function(tex){
+            if('colorSpace' in tex) tex.colorSpace = THREE.SRGBColorSpace;
+            else if('encoding' in tex) tex.encoding = THREE.sRGBEncoding;
+            screenMat.map = tex;
+            screenMat.needsUpdate = true;
+          });
+        }
+        var screenMesh = new THREE.Mesh(screenGeo, screenMat);
+        screenMesh.position.set(0, 1.34, -0.001);
+        bezelMesh.add(screenMesh); // child of the bezel so it doesn't need its own world offset math
+        screenMesh.position.set(0, 0, 0.051);
+
+        // Static (non-waving) arm: simple two-segment resting arm.
+        var armGeo = new THREE.CylinderGeometry(0.035, 0.032, 0.26, 12);
+        var handGeo = new THREE.SphereGeometry(0.045, 14, 10);
+        var armMat = plasticMat(DARK);
+        var restShoulder = new THREE.Group();
+        restShoulder.position.set(-0.19, 0.92, -0.02);
+        var restUpper = new THREE.Mesh(armGeo, armMat);
+        restUpper.position.y = -0.13;
+        restShoulder.add(restUpper);
+        var restHand = new THREE.Mesh(handGeo, armMat);
+        restHand.position.y = -0.27;
+        restShoulder.add(restHand);
+        restShoulder.rotation.z = 0.12;
+        deskGroup.add(restShoulder);
+
+        // Waving arm: shoulder -> upper arm -> elbow -> forearm -> hand,
+        // a real hierarchy so raising/rotating it looks like an actual
+        // arm instead of one rigid rocking block.
+        waveShoulder = new THREE.Group();
+        waveShoulder.position.set(0.19, 0.92, -0.02);
+        var upperArm = new THREE.Mesh(armGeo, armMat);
+        upperArm.position.y = -0.13;
+        waveShoulder.add(upperArm);
+        var elbow = new THREE.Group();
+        elbow.position.y = -0.26;
+        waveShoulder.add(elbow);
+        var foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.028,0.22,12), armMat);
+        foreArm.position.y = -0.11;
+        elbow.add(foreArm);
+        var waveHand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 14, 10), armMat);
+        waveHand.position.y = -0.23;
+        elbow.add(waveHand);
+        // Resting pose: arm down at the side, matching the static arm,
+        // until the wave window lifts and swings it (see draw()).
+        waveShoulder.rotation.z = -0.12;
+        elbow.rotation.z = 0;
+        deskGroup.add(waveShoulder);
+
+        gl.add(deskGroup);
+
+        // "Hi!" sprite -- reused approach from the earlier walker: a
+        // canvas-drawn billboard rather than any real facial/voice cue,
+        // since this figure has no face to smile or mouth to speak with.
+        var hiCanvas = document.createElement('canvas');
+        hiCanvas.width = 256; hiCanvas.height = 128;
+        var hiCtx = hiCanvas.getContext('2d');
+        hiCtx.font = '700 72px "Space Grotesk", sans-serif';
+        hiCtx.textAlign = 'center';
+        hiCtx.textBaseline = 'middle';
+        hiCtx.shadowColor = 'rgba(207,255,46,0.9)';
+        hiCtx.shadowBlur = 18;
+        hiCtx.fillStyle = '#cfff2e';
+        hiCtx.fillText('Hi!', 128, 64);
+        hiCtx.shadowBlur = 0;
+        hiCtx.fillText('Hi!', 128, 64);
+        var hiTex = new THREE.CanvasTexture(hiCanvas);
+        deskHiSpriteMat = new THREE.SpriteMaterial({map:hiTex, transparent:true, opacity:0, depthTest:false});
+        deskHiSprite = new THREE.Sprite(deskHiSpriteMat);
+        deskHiSprite.renderOrder = 10;
+        deskHiSprite.position.set(0.45, 1.55, 0);
+        deskHiSprite.scale.set(0.5, 0.25, 1);
+        deskGroup.add(deskHiSprite);
+
+        // Lighting: this scene otherwise has none (ambient dust/ground
+        // lines are unlit points/lines), so the MeshPhysicalMaterial
+        // limbs/desk need real lights or they render almost black.
+        gl.add(new THREE.AmbientLight(0xffffff, 0.55));
+        var deskKey = new THREE.DirectionalLight(0xffffff, 1.1);
+        deskKey.position.set(3, 6, 8);
+        gl.add(deskKey);
+        var deskFill = new THREE.DirectionalLight(0xdfe6ff, 0.45);
+        deskFill.position.set(-4, 2, 5);
+        gl.add(deskFill);
+      } catch(err){
+        console.error('[deskCharacter] build failed:', err);
+      }
+    }
+    buildDeskCharacter();
     // Image removed per request: the hero shows no photo/3D object at all
     // now, just the name/role text and the existing particle/code-rain
     // background. Left the disabled calls below (rather than deleting the
@@ -3461,6 +3625,57 @@ section{position:relative;}
         }
       }
 
+
+      // Desk character: scroll-triggered vignette (see build note above).
+      // Slides in from off-screen left, the monitor face fades on once it
+      // arrives, then the rigged arm raises and waves alongside "Hi!".
+      if(deskGroup){
+        var camZ4 = camera.position.z;
+        var vFOV4 = camera.fov * Math.PI/180;
+        var visH4 = 2 * Math.tan(vFOV4/2) * Math.abs(camZ4);
+        var visW4 = visH4 * camera.aspect;
+        var deskScale = visH4 * (isMobile ? 0.42 : 0.34);
+        deskGroup.scale.setScalar(deskScale);
+
+        var WALK_START = 0.28, WALK_END = 0.50, SCREEN_END = 0.58;
+        var walkT = clamp((progress-WALK_START)/(WALK_END-WALK_START), 0, 1);
+        var walkEase = walkT*walkT*(3-2*walkT);
+        var screenT = clamp((progress-WALK_END)/(SCREEN_END-WALK_END), 0, 1);
+        var vignetteExit = 1 - clamp((progress-0.90)/0.10, 0, 1);
+
+        var startX = -visW4*0.9;
+        deskGroup.position.set(lerp(startX, 0, walkEase), -visH4*0.36, 2.6);
+        var bobFade = 1 - walkEase;
+        deskGroup.position.y += Math.abs(Math.sin(elapsed*7*0.85)) * 0.02 * deskScale * bobFade;
+        deskGroup.rotation.z = Math.sin(elapsed*7) * 0.03 * bobFade;
+
+        if(screenMat) screenMat.opacity = screenT * vignetteExit;
+        if(screenGlowMat) screenGlowMat.opacity = screenT * 0.55 * vignetteExit;
+
+        // Wave + "Hi!": shoulder lifts the whole arm up and out, the elbow
+        // adds a quick side-to-side flick on top -- a real two-joint wave
+        // rather than one rigid rocking piece, since this rig is authored
+        // from scratch rather than cut from a scanned mesh.
+        var WAVE_IN_START = 0.55, WAVE_PEAK = 0.62, WAVE_OUT_END = 0.72;
+        var waveIn = clamp((progress-WAVE_IN_START)/(WAVE_PEAK-WAVE_IN_START), 0, 1);
+        var waveOut = 1 - clamp((progress-WAVE_PEAK)/(WAVE_OUT_END-WAVE_PEAK), 0, 1);
+        var waveEnvelope = Math.min(waveIn, waveOut) * vignetteExit;
+        if(waveShoulder){
+          var liftedZ = -1.9; // raised up and out to the side
+          waveShoulder.rotation.z = lerp(-0.12, liftedZ, waveEnvelope);
+          var elbowNode = waveShoulder.children[1]; // elbow group added 2nd
+          if(elbowNode) elbowNode.rotation.z = Math.sin(elapsed*10) * 0.5 * waveEnvelope;
+        }
+        if(deskHiSpriteMat) deskHiSpriteMat.opacity = waveEnvelope;
+
+        deskGroup.traverse(function(node){
+          if(node.isMesh && node.material && 'opacity' in node.material && node !== null){
+            // Fade the whole figure out with everything else on exit,
+            // without touching the screen/glow (handled above) which
+            // already factor vignetteExit into their own opacity.
+          }
+        });
+      }
 
       renderer.render(gl, camera);
     }
