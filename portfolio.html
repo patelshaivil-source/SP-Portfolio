@@ -2751,170 +2751,152 @@ section{position:relative;}
       }
     }
     /* ======================================================================
-       TV-HEAD CHARACTER -- an original "CRT monitor for a head" figure.
-       This is Claude's own design: proportions, materials, rigging and
-       animation are authored from scratch for this site. It is NOT a
-       reproduction of any specific reference clip's character, framing,
-       or shot-by-shot motion -- a "person with a screen for a head" is a
-       generic sci-fi/cyberpunk archetype, but the exact model, cabling,
-       palette and choreography below are original to this build.
-       Built entirely from primitives (boxes/cylinders/spheres/tubes) so
-       there's a real hierarchical rig -- shoulder/elbow groups for the
-       wave, independent cable pivots for secondary sway -- rather than
-       a scanned mesh.
-       Sequence: rises/fades in centered in the scene, the CRT face wakes
-       up showing Shaivil's portrait with a scanline/vignette treatment,
-       idle breathing + floating + head/body pointer-tracking runs
-       throughout, then the arm raises into a wave alongside a "Hi!" cue.
+       TV-HEAD CHARACTER (v2 rebuild) -- an original grounded robot with a
+       CRT-monitor head. Rebuilt after feedback that v1 read as a floating,
+       overly-smooth "snowman" of primitives with a blown-out green screen
+       highlight. This version:
+         - fixes the screen (the "green sphere" was a mirror-glossy curved
+           glass catching a saturated green rim light -- removed the glow
+           overlay plane and detuned the glass so the portrait is legible)
+         - drops the floating idle motion; the figure stands on a grounded
+           plinth with a static contact shadow
+         - replaces the tall tapered-cylinder body with a boxier, panelled
+           chassis built from short stacked segments (reads as a torso,
+           not a capsule)
+         - shrinks the oversized ball shoulders to small angular pauldrons
+         - shortens/thickens the neck
+         - thins the TV bezel/depth and removes the low-poly "bezel lip"
+           torus that was reading as angular/distorted
+         - rebuilds the cable set with asymmetric lengths/paths instead of
+           mirrored pairs, and removes the "Hi!" sprite entirely
+       This remains an original design (not a reproduction of any specific
+       third-party reference clip's exact character/shot/timing) built
+       from primitives + tube geometry, organized under one root group
+       with clear subgroups per part.
        ====================================================================== */
-    var tvGroup = null, screenMat = null, screenGlowMat = null, screenTex = null;
-    var waveShoulder = null, tvHiSprite = null, tvHiSpriteMat = null;
-    var tvHeadPivot = null, tvCables = [];
+    var tvGroup = null, screenMat = null, screenTex = null;
+    var waveShoulder = null, tvHeadPivot = null, tvCables = [];
     var ACCENT_LIME = 0xcfff2e;
 
     function buildTVHeadCharacter(){
       try{
         tvGroup = new THREE.Group();
 
-        // ---- materials ------------------------------------------------
-        function bodyMat(color, extra){
-          return new THREE.MeshPhysicalMaterial(Object.assign({
-            color: color, roughness: .55, metalness: .18,
-            clearcoat: .35, clearcoatRoughness: .35
-          }, extra || {}));
+        // ---- materials --------------------------------------------------
+        var torsoMat = new THREE.MeshStandardMaterial({color:0x1c1d21, roughness:.68, metalness:.12});
+        var panelMat = new THREE.MeshStandardMaterial({color:0x222327, roughness:.55, metalness:.16});
+        var limbMat  = new THREE.MeshStandardMaterial({color:0x18191d, roughness:.62, metalness:.14});
+        var jointMat = new THREE.MeshStandardMaterial({color:0x0a0a0c, roughness:.85, metalness:.1});
+        var trimMat  = new THREE.MeshStandardMaterial({color:0x2c2d31, roughness:.32, metalness:.3});
+        var accentMat = new THREE.MeshStandardMaterial({color:0x141510, roughness:.4, metalness:.2, emissive:ACCENT_LIME, emissiveIntensity:.55});
+        var crtShellMat = new THREE.MeshStandardMaterial({color:0x131316, roughness:.42, metalness:.1});
+        var crtEdgeMat  = new THREE.MeshStandardMaterial({color:0x1a1b1e, roughness:.24, metalness:.25});
+        var cableMat  = new THREE.MeshStandardMaterial({color:0x0a0a0b, roughness:.9, metalness:.05});
+
+        // ---- grounded base / plinth --------------------------------------
+        var plinth = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.34, 0.05, 24), jointMat);
+        plinth.position.y = 0.025;
+        tvGroup.add(plinth);
+        var foot = new THREE.Mesh(new THREE.CylinderGeometry(0.135, 0.16, 0.16, 16), limbMat);
+        foot.position.y = 0.13;
+        tvGroup.add(foot);
+
+        // ---- torso: short stacked panel segments (boxy, not a capsule) --
+        // Building the chassis from a handful of distinct, slightly
+        // different-width box segments reads as an intentionally
+        // panelled torso instead of one smooth lofted primitive.
+        var torsoSegments = [
+          {y:0.27, w:0.30, d:0.20, h:0.08, mat:limbMat},   // waist
+          {y:0.37, w:0.34, d:0.22, h:0.14, mat:torsoMat},  // lower chest
+          {y:0.52, w:0.40, d:0.24, h:0.16, mat:torsoMat},  // upper chest (widest)
+          {y:0.66, w:0.36, d:0.22, h:0.10, mat:panelMat}   // collar plate
+        ];
+        torsoSegments.forEach(function(seg){
+          var mesh = new THREE.Mesh(new THREE.BoxGeometry(seg.w, seg.h, seg.d), seg.mat);
+          mesh.position.y = seg.y;
+          tvGroup.add(mesh);
+        });
+        // a single thin lime seam across the chest -- one accent, not a
+        // pattern of decorative rings
+        var chestSeam = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.012, 0.01), accentMat);
+        chestSeam.position.set(0, 0.50, 0.121);
+        tvGroup.add(chestSeam);
+
+        // ---- shoulders: small angular pauldrons, not oversized balls ---
+        function pauldron(x){
+          var p = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.16), panelMat);
+          p.position.set(x, 0.705, 0);
+          return p;
         }
-        function shellMat(color, extra){
-          return new THREE.MeshPhysicalMaterial(Object.assign({
-            color: color, roughness: .32, metalness: .08,
-            clearcoat: .7, clearcoatRoughness: .22
-          }, extra || {}));
-        }
-        var jointMat = new THREE.MeshStandardMaterial({color:0x0b0c0e, roughness:.85, metalness:.15});
-        var accentMat = new THREE.MeshStandardMaterial({color:0x11130f, roughness:.4, metalness:.3, emissive:ACCENT_LIME, emissiveIntensity:.85});
-        var cableMat = new THREE.MeshStandardMaterial({color:0x0a0a0c, roughness:.92, metalness:.05});
-        var torsoBody = bodyMat(0x17181c);
-        var limbBody = bodyMat(0x1b1c20);
-        var crtShell = shellMat(0x101114);
-        var crtRim = shellMat(0x0c0d10, {roughness:.22, clearcoat:.85});
+        tvGroup.add(pauldron(-0.225));
+        tvGroup.add(pauldron(0.225));
 
-        function accentRing(radius, tube, x, y, z, rotX){
-          var ring = new THREE.Mesh(new THREE.TorusGeometry(radius, tube, 10, 24), accentMat);
-          ring.position.set(x, y, z);
-          if(rotX) ring.rotation.x = Math.PI/2;
-          return ring;
-        }
-
-        // ---- lower body / hips -----------------------------------------
-        var hips = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.165, 0.22, 22), torsoBody);
-        hips.position.y = 0.50;
-        tvGroup.add(hips);
-        // short tapered "legs" merged into a single grounded base --
-        // this character is a floating hero object, not a walking figure,
-        // so the lower body reads as a stylized stand rather than legs.
-        var base = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.10, 0.30, 22), limbBody);
-        base.position.y = 0.24;
-        tvGroup.add(base);
-        tvGroup.add(accentRing(0.168, 0.006, 0, 0.395, 0, true));
-
-        // ---- upper torso --------------------------------------------------
-        var torso = new THREE.Mesh(new THREE.CylinderGeometry(0.205, 0.155, 0.46, 22), torsoBody);
-        torso.position.y = 0.845;
-        tvGroup.add(torso);
-        // chest vent lines -- thin recessed-look boxes for surface detail
-        for(var vi=0; vi<3; vi++){
-          var vent = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.012, 0.01), jointMat);
-          vent.position.set(0, 0.93 - vi*0.05, 0.195);
-          tvGroup.add(vent);
-        }
-
-        // ---- shoulder caps -------------------------------------------------
-        var shoulderCapGeo = new THREE.SphereGeometry(0.085, 18, 14);
-        var lShoulderCap = new THREE.Mesh(shoulderCapGeo, torsoBody);
-        lShoulderCap.position.set(-0.225, 1.045, 0);
-        tvGroup.add(lShoulderCap);
-        var rShoulderCap = new THREE.Mesh(shoulderCapGeo, torsoBody);
-        rShoulderCap.position.set(0.225, 1.045, 0);
-        tvGroup.add(rShoulderCap);
-
-        // ---- neck -----------------------------------------------------
-        var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.065, 0.16, 14), jointMat);
-        neck.position.set(0, 1.135, 0);
+        // ---- neck: short + thick, direct head-to-body connection --------
+        var neck = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.07, 16), jointMat);
+        neck.position.set(0, 0.735, 0);
         tvGroup.add(neck);
-        tvGroup.add(accentRing(0.058, 0.005, 0, 1.075, 0, true));
 
-        // ---- CRT head (the focal point) --------------------------------
-        // A pivot group at the base of the neck lets the whole head
-        // rotate for idle look-around + pointer tracking without
-        // recomputing child offsets.
+        // ---- CRT head -----------------------------------------------------
         tvHeadPivot = new THREE.Group();
-        tvHeadPivot.position.set(0, 1.22, 0);
+        tvHeadPivot.position.set(0, 0.865, 0);
         tvGroup.add(tvHeadPivot);
 
-        var headCenterY = 0.235; // head geometry sits above the pivot origin
-
-        // Rear housing: deeper, narrower box that tapers back -- gives the
-        // CRT real enclosure depth instead of reading as a flat panel.
-        var rearHousing = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.34, 0.30), crtShell);
-        rearHousing.position.set(0, headCenterY, -0.06);
+        // Thin rear housing (shallow depth -- a monitor, not a deep box).
+        var rearHousing = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.32, 0.16), crtShellMat);
+        rearHousing.position.set(0, 0, -0.03);
         tvHeadPivot.add(rearHousing);
-        var rearTaper = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.02, 0.14, 4), crtShell);
-        rearTaper.rotation.x = -Math.PI/2;
-        rearTaper.rotation.y = Math.PI/4;
-        rearTaper.position.set(0, headCenterY, -0.24);
-        tvHeadPivot.add(rearTaper);
+        // Small tapered stub at the very back where cables originate.
+        var rearStub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.07, 8), crtShellMat);
+        rearStub.rotation.x = Math.PI/2;
+        rearStub.position.set(0, 0, -0.135);
+        tvHeadPivot.add(rearStub);
 
-        // Front bezel: the thick beveled-looking frame around the glass.
-        // A slightly larger outer shell plus a recessed inner lip (via the
-        // rim torus below) reads as a bevel without custom rounded geo.
-        var bezel = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.40, 0.16), crtShell);
-        bezel.position.set(0, headCenterY, 0.08);
+        // Front bezel: thin frame, not a deep block. A slightly smaller
+        // inset panel in front reads as a bevel without a distorted
+        // low-poly torus.
+        var bezel = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.34, 0.07), crtShellMat);
+        bezel.position.set(0, 0, 0.055);
         tvHeadPivot.add(bezel);
-        var bezelLip = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.018, 10, 4, Math.PI*2), crtRim);
-        bezelLip.rotation.z = Math.PI/4;
-        bezelLip.scale.set(1.28, 1.05, 1);
-        bezelLip.position.set(0, headCenterY, 0.155);
-        tvHeadPivot.add(bezelLip);
+        var bezelInset = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.30, 0.02), crtEdgeMat);
+        bezelInset.position.set(0, 0, 0.10);
+        tvHeadPivot.add(bezelInset);
 
-        // Slightly curved glass: displace a plane's vertices radially so
-        // highlights read as a rounded CRT face instead of a flat pane.
-        var glassGeo = new THREE.PlaneGeometry(0.36, 0.30, 12, 10);
+        // Mildly curved glass -- curvature kept subtle on purpose: a
+        // strongly curved + glossy screen is what produced the "green
+        // sphere" artifact last time.
+        var glassGeo = new THREE.PlaneGeometry(0.33, 0.27, 10, 8);
         var gp = glassGeo.attributes.position;
         for(var gi=0; gi<gp.count; gi++){
-          var gx = gp.getX(gi)/0.18, gy = gp.getY(gi)/0.15;
-          var curve = (1 - Math.min(1, gx*gx + gy*gy)) * 0.028;
-          gp.setZ(gi, curve);
+          var gx = gp.getX(gi)/0.165, gy = gp.getY(gi)/0.135;
+          gp.setZ(gi, (1 - Math.min(1, gx*gx + gy*gy)) * 0.008);
         }
         glassGeo.computeVertexNormals();
-        var glassMat = new THREE.MeshPhysicalMaterial({
-          color:0x03110a, roughness:.14, metalness:0, clearcoat:1, clearcoatRoughness:.08,
-          emissive:0x0a3d22, emissiveIntensity:.18, transparent:true, opacity:.96
+        var glassMat = new THREE.MeshStandardMaterial({
+          color:0x040604, roughness:.38, metalness:.05,
+          emissive:0x041a10, emissiveIntensity:.06
         });
         var glassMesh = new THREE.Mesh(glassGeo, glassMat);
-        glassMesh.position.set(0, headCenterY, 0.162);
+        glassMesh.position.set(0, 0, 0.112);
         tvHeadPivot.add(glassMesh);
 
-        // Portrait screen content -- baked once onto a canvas with
-        // scanlines + vignette + a faint bezel glow, so the "CRT finish"
-        // doesn't need a per-frame shader.
+        // Portrait screen content -- baked once onto canvas with a light
+        // scanline + vignette treatment.
         var screenCanvas = document.createElement('canvas');
         screenCanvas.width = 256; screenCanvas.height = 208;
         var sctx = screenCanvas.getContext('2d');
         function paintScanlineOverlay(){
           for(var y=0; y<screenCanvas.height; y+=3){
-            sctx.fillStyle = 'rgba(0,0,0,0.16)';
+            sctx.fillStyle = 'rgba(0,0,0,0.14)';
             sctx.fillRect(0, y, screenCanvas.width, 1);
           }
           var vg = sctx.createRadialGradient(
-            screenCanvas.width/2, screenCanvas.height/2, screenCanvas.width*0.18,
+            screenCanvas.width/2, screenCanvas.height/2, screenCanvas.width*0.22,
             screenCanvas.width/2, screenCanvas.height/2, screenCanvas.width*0.62
           );
           vg.addColorStop(0, 'rgba(0,0,0,0)');
-          vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+          vg.addColorStop(1, 'rgba(0,0,0,0.5)');
           sctx.fillStyle = vg;
           sctx.fillRect(0,0,screenCanvas.width, screenCanvas.height);
-          sctx.strokeStyle = 'rgba(207,255,46,0.35)';
-          sctx.lineWidth = 3;
-          sctx.strokeRect(1.5, 1.5, screenCanvas.width-3, screenCanvas.height-3);
         }
         sctx.fillStyle = '#050705';
         sctx.fillRect(0,0,screenCanvas.width, screenCanvas.height);
@@ -2943,182 +2925,135 @@ section{position:relative;}
           portraitImg.src = PORTRAIT_IMG_SRC;
         }
 
-        var glowGeo = new THREE.PlaneGeometry(0.44, 0.37);
-        screenGlowMat = new THREE.MeshBasicMaterial({color:ACCENT_LIME, transparent:true, opacity:0});
-        var glowMesh = new THREE.Mesh(glowGeo, screenGlowMat);
-        glowMesh.position.set(0, headCenterY, 0.09);
-        tvHeadPivot.add(glowMesh);
-
-        var screenGeo = new THREE.PlaneGeometry(0.335, 0.275);
+        var screenGeo = new THREE.PlaneGeometry(0.325, 0.265);
         screenMat = new THREE.MeshBasicMaterial({map:screenTex, transparent:true, opacity:0});
         var screenMesh = new THREE.Mesh(screenGeo, screenMat);
-        screenMesh.position.set(0, headCenterY, 0.168);
+        screenMesh.position.set(0, 0, 0.118);
         tvHeadPivot.add(screenMesh);
 
-        // ---- rear connection panel + cable ports -----------------------
-        var portPositions = [
-          [-0.13, headCenterY+0.10, -0.205], [0.02, headCenterY+0.11, -0.205],
-          [0.15, headCenterY+0.06, -0.20], [-0.16, headCenterY-0.06, -0.19],
-          [0.00, headCenterY-0.12, -0.185], [0.14, headCenterY-0.10, -0.185]
+        // ---- rear cable ports (on the head stub + upper back) -----------
+        var headPortPositions = [
+          [-0.03, 0.02, -0.16], [0.025, -0.02, -0.165], [-0.045, -0.03, -0.15]
         ];
-        var headPorts = portPositions.map(function(p){
-          var port = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.02, 0.03, 10), jointMat);
+        headPortPositions.forEach(function(p){
+          var port = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.02, 8), jointMat);
           port.rotation.x = Math.PI/2;
           port.position.set(p[0], p[1], p[2]);
           tvHeadPivot.add(port);
-          var ring = new THREE.Mesh(new THREE.TorusGeometry(0.019, 0.004, 8, 14), accentMat);
-          ring.position.set(p[0], p[1], p[2]-0.016);
-          tvHeadPivot.add(ring);
-          return p;
         });
-        // two more ports on the upper back (torso), for cables that route
-        // to the body rather than only the head.
-        var torsoPorts = [[-0.11, 1.00, -0.185], [0.10, 0.96, -0.19]];
-        torsoPorts.forEach(function(p){
-          var port = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.019, 0.028, 10), jointMat);
+        var torsoPortPositions = [[-0.09, 0.60, -0.115], [0.08, 0.44, -0.125], [0.0, 0.35, -0.105]];
+        torsoPortPositions.forEach(function(p){
+          var port = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.015, 0.018, 8), jointMat);
           port.rotation.x = Math.PI/2;
           port.position.set(p[0], p[1], p[2]);
           tvGroup.add(port);
         });
 
-        // ---- arms -------------------------------------------------------
-        var armGeo = new THREE.CylinderGeometry(0.042, 0.037, 0.28, 14);
-        var foreGeo = new THREE.CylinderGeometry(0.034, 0.03, 0.24, 14);
-        var handGeo = new THREE.SphereGeometry(0.052, 16, 12);
+        // ---- arms --------------------------------------------------------
+        var armGeo = new THREE.CylinderGeometry(0.038, 0.034, 0.24, 12);
+        var foreGeo = new THREE.CylinderGeometry(0.032, 0.028, 0.20, 12);
+        var handGeo = new THREE.BoxGeometry(0.08, 0.09, 0.05);
 
         var restShoulder = new THREE.Group();
-        restShoulder.position.set(-0.225, 1.045, 0);
-        var restUpper = new THREE.Mesh(armGeo, limbBody);
-        restUpper.position.y = -0.14;
+        restShoulder.position.set(-0.225, 0.705, 0);
+        var restUpper = new THREE.Mesh(armGeo, limbMat);
+        restUpper.position.y = -0.12;
         restShoulder.add(restUpper);
         var restElbow = new THREE.Group();
-        restElbow.position.y = -0.28;
+        restElbow.position.y = -0.24;
         restShoulder.add(restElbow);
-        var restFore = new THREE.Mesh(foreGeo, limbBody);
-        restFore.position.y = -0.12;
+        var restFore = new THREE.Mesh(foreGeo, limbMat);
+        restFore.position.y = -0.10;
         restElbow.add(restFore);
-        var restHand = new THREE.Mesh(handGeo, limbBody);
-        restHand.position.y = -0.25;
+        var restHand = new THREE.Mesh(handGeo, jointMat);
+        restHand.position.y = -0.21;
         restElbow.add(restHand);
-        restShoulder.rotation.z = 0.10;
-        restElbow.rotation.z = 0.06;
+        restShoulder.rotation.z = 0.08;
+        restElbow.rotation.z = 0.05;
         tvGroup.add(restShoulder);
 
-        // Waving arm: shoulder -> upper arm -> elbow -> forearm -> hand.
         waveShoulder = new THREE.Group();
-        waveShoulder.position.set(0.225, 1.045, 0);
-        var upperArm = new THREE.Mesh(armGeo, limbBody);
-        upperArm.position.y = -0.14;
+        waveShoulder.position.set(0.225, 0.705, 0);
+        var upperArm = new THREE.Mesh(armGeo, limbMat);
+        upperArm.position.y = -0.12;
         waveShoulder.add(upperArm);
         var elbow = new THREE.Group();
-        elbow.position.y = -0.28;
+        elbow.position.y = -0.24;
         waveShoulder.add(elbow);
-        var foreArm = new THREE.Mesh(foreGeo, limbBody);
-        foreArm.position.y = -0.12;
+        var foreArm = new THREE.Mesh(foreGeo, limbMat);
+        foreArm.position.y = -0.10;
         elbow.add(foreArm);
-        var waveHand = new THREE.Mesh(handGeo, limbBody);
-        waveHand.position.y = -0.25;
+        var waveHand = new THREE.Mesh(handGeo, jointMat);
+        waveHand.position.y = -0.21;
         elbow.add(waveHand);
-        waveShoulder.rotation.z = -0.10;
-        elbow.rotation.z = -0.06;
+        waveShoulder.rotation.z = -0.08;
+        elbow.rotation.z = -0.05;
         tvGroup.add(waveShoulder);
 
         gl.add(tvGroup);
 
-        // ---- cables ------------------------------------------------------
-        // Each cable is its own small pivot group anchored at the port, so
-        // "gentle secondary motion" is a cheap rotation of that pivot each
-        // frame rather than rebuilding tube geometry every frame.
+        // ---- cables: asymmetric lengths/paths, not mirrored loops -------
         var cableRoutes = [
-          {from:[-0.13, headCenterY+0.10, -0.205], len:0.62, out:[-0.30,-0.10,-0.22], thick:0.016},
-          {from:[0.02, headCenterY+0.11, -0.205],  len:0.74, out:[0.06,-0.30,-0.30],  thick:0.013},
-          {from:[0.15, headCenterY+0.06, -0.20],   len:0.50, out:[0.34,-0.14,-0.16],  thick:0.011},
-          {from:[-0.16, headCenterY-0.06, -0.19],  len:0.46, out:[-0.32,-0.06,-0.12], thick:0.014},
-          {from:[0.00, headCenterY-0.12, -0.185],  len:0.58, out:[0.02,-0.30,-0.24],  thick:0.010},
-          {from:[0.14, headCenterY-0.10, -0.185],  len:0.40, out:[0.28,-0.10,-0.10],  thick:0.009},
-          {from:[-0.11, 1.00, -0.185],              len:0.44, out:[-0.26,-0.14,-0.10], thick:0.015, parentTorso:true},
-          {from:[0.10, 0.96, -0.19],                len:0.36, out:[0.22,-0.10,-0.08],  thick:0.012, parentTorso:true}
+          {from:[-0.03, 0.02, -0.16], out:[-0.22,-0.55,-0.10], thick:0.014, onHead:true},
+          {from:[0.025, -0.02, -0.165], out:[0.10,-0.62,-0.16], thick:0.010, onHead:true},
+          {from:[-0.045, -0.03, -0.15], out:[-0.06,-0.40,-0.06], thick:0.008, onHead:true},
+          {from:[-0.09, 0.60, -0.115], out:[-0.27,0.02,-0.05], thick:0.013, onHead:false},
+          {from:[0.08, 0.44, -0.125],  out:[0.24,-0.20,-0.08],  thick:0.011, onHead:false},
+          {from:[0.0, 0.35, -0.105],   out:[0.05,-0.30,-0.03],  thick:0.009, onHead:false}
         ];
         cableRoutes.forEach(function(route, ci){
           var start = new THREE.Vector3(0,0,0);
-          var mid1 = new THREE.Vector3(route.out[0]*0.45, route.out[1]*0.35, route.out[2]*0.7);
-          var mid2 = new THREE.Vector3(route.out[0]*0.85, route.out[1]*0.75, route.out[2]*0.45);
-          var end = new THREE.Vector3(route.out[0], route.out[1]*1.35 - route.len*0.35, route.out[2]*0.3);
+          var mid1 = new THREE.Vector3(route.out[0]*0.35, route.out[1]*0.30, route.out[2]*0.75 - 0.05);
+          var mid2 = new THREE.Vector3(route.out[0]*0.75, route.out[1]*0.68, route.out[2]*0.4 - 0.02);
+          var end = new THREE.Vector3(route.out[0], route.out[1], route.out[2]*0.2);
           var curve = new THREE.CatmullRomCurve3([start, mid1, mid2, end]);
-          var tubeGeo = new THREE.TubeGeometry(curve, 24, route.thick, 8, false);
+          var tubeGeo = new THREE.TubeGeometry(curve, 20, route.thick, 7, false);
           var tubeMesh = new THREE.Mesh(tubeGeo, cableMat);
 
-          var connector = new THREE.Mesh(new THREE.CylinderGeometry(route.thick*1.5, route.thick*1.6, 0.03, 10), jointMat);
+          var connector = new THREE.Mesh(new THREE.CylinderGeometry(route.thick*1.5, route.thick*1.6, 0.024, 8), jointMat);
           connector.position.copy(start);
-          var endConnector = new THREE.Mesh(new THREE.CylinderGeometry(route.thick*1.3, route.thick*1.3, 0.022, 8), jointMat);
-          endConnector.position.copy(end);
 
           var pivot = new THREE.Group();
           pivot.position.set(route.from[0], route.from[1], route.from[2]);
-          pivot.add(tubeMesh, connector, endConnector);
+          pivot.add(tubeMesh, connector);
 
-          if(route.parentTorso){ tvGroup.add(pivot); }
-          else { tvHeadPivot.add(pivot); }
-
-          tvCables.push({group:pivot, phase: ci*0.9 + Math.random()*0.4, amp: 0.04 + Math.random()*0.03, onHead: !route.parentTorso});
+          if(route.onHead){ tvHeadPivot.add(pivot); } else { tvGroup.add(pivot); }
+          tvCables.push({group:pivot, phase: ci*1.1 + Math.random()*0.3, amp: 0.02 + Math.random()*0.015});
         });
 
-        // ---- "Hi!" sprite --------------------------------------------
-        var hiCanvas = document.createElement('canvas');
-        hiCanvas.width = 256; hiCanvas.height = 128;
-        var hiCtx = hiCanvas.getContext('2d');
-        hiCtx.font = '700 72px "Space Grotesk", sans-serif';
-        hiCtx.textAlign = 'center';
-        hiCtx.textBaseline = 'middle';
-        hiCtx.shadowColor = 'rgba(207,255,46,0.9)';
-        hiCtx.shadowBlur = 18;
-        hiCtx.fillStyle = '#cfff2e';
-        hiCtx.fillText('Hi!', 128, 64);
-        hiCtx.shadowBlur = 0;
-        hiCtx.fillText('Hi!', 128, 64);
-        var hiTex = new THREE.CanvasTexture(hiCanvas);
-        tvHiSpriteMat = new THREE.SpriteMaterial({map:hiTex, transparent:true, opacity:0, depthTest:false});
-        tvHiSprite = new THREE.Sprite(tvHiSpriteMat);
-        tvHiSprite.renderOrder = 10;
-        tvHiSprite.position.set(0.52, 1.55, 0.1);
-        tvHiSprite.scale.set(0.5, 0.25, 1);
-        tvGroup.add(tvHiSprite);
-
-        // ---- fake soft contact shadow -----------------------------------
-        // A cheap radial-gradient blob rather than a real shadow map --
-        // avoids touching the renderer's global shadow settings (which
-        // other already-tuned scenes in this file don't expect).
+        // ---- static contact shadow (character is grounded, not floating) --
         var shadowCanvas = document.createElement('canvas');
         shadowCanvas.width = 128; shadowCanvas.height = 128;
         var shctx = shadowCanvas.getContext('2d');
         var shg = shctx.createRadialGradient(64,64,0,64,64,62);
-        shg.addColorStop(0, 'rgba(0,0,0,0.55)');
+        shg.addColorStop(0, 'rgba(0,0,0,0.5)');
         shg.addColorStop(1, 'rgba(0,0,0,0)');
         shctx.fillStyle = shg;
         shctx.fillRect(0,0,128,128);
         var shadowTex = new THREE.CanvasTexture(shadowCanvas);
         var shadowMat = new THREE.MeshBasicMaterial({map:shadowTex, transparent:true, opacity:0, depthWrite:false});
-        var shadowMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.34), shadowMat);
+        var shadowMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.36), shadowMat);
         shadowMesh.rotation.x = -Math.PI/2;
-        shadowMesh.position.set(0, 0.005, 0.05);
+        shadowMesh.position.set(0, 0.002, 0.05);
         tvGroup.add(shadowMesh);
         tvGroup.userData.shadowMat = shadowMat;
 
-        // ---- lighting: cinematic rim + soft key/fill --------------------
-        // This scene otherwise has no lights, so the PBR body/head need
-        // real lights or they render almost black.
-        gl.add(new THREE.AmbientLight(0xffffff, 0.38));
-        var key = new THREE.DirectionalLight(0xf3f2ec, 0.95);
-        key.position.set(2.6, 5, 6);
+        // ---- lighting: soft key/fill, restrained rim, no direct hit on the
+        // screen (that direct hit was the other half of the "green sphere"
+        // bug) -------------------------------------------------------------
+        gl.add(new THREE.AmbientLight(0xffffff, 0.42));
+        var key = new THREE.DirectionalLight(0xf3f2ec, 0.85);
+        key.position.set(2.2, 4.5, 5);
         gl.add(key);
-        var fill = new THREE.DirectionalLight(0xdfe6ff, 0.28);
-        fill.position.set(-3.5, 1.5, 4);
+        var fill = new THREE.DirectionalLight(0xdfe6ff, 0.30);
+        fill.position.set(-3.0, 1.2, 3.2);
         gl.add(fill);
-        var rim = new THREE.DirectionalLight(ACCENT_LIME, 0.9);
-        rim.position.set(-1.6, 2.2, -3.2);
+        // Rim light aimed at the body's side edge, not the screen face.
+        var rim = new THREE.DirectionalLight(ACCENT_LIME, 0.35);
+        rim.position.set(-2.2, 1.0, -1.0);
         gl.add(rim);
-        var screenBounce = new THREE.PointLight(ACCENT_LIME, 0, 1.4, 2);
-        screenBounce.position.set(0, 1.22, 0.3);
+        var screenBounce = new THREE.PointLight(ACCENT_LIME, 0, 1.0, 2);
+        screenBounce.position.set(0, 0.865, 0.2);
         gl.add(screenBounce);
         tvGroup.userData.screenBounce = screenBounce;
       } catch(err){
@@ -3839,82 +3774,58 @@ section{position:relative;}
       }
 
 
-      // TV-head character: scroll-triggered vignette (see build note
-      // above). Rises/fades in centered, the CRT face wakes up with
-      // Shaivil's portrait, idle breathing/float/head-tracking runs
-      // throughout, then the rigged arm raises into a wave with "Hi!".
+      // TV-head character: scroll-triggered vignette. Grounded (no
+      // floating idle motion) -- rises into place once, the screen wakes
+      // up with the portrait, a restrained wave plays once, then the
+      // whole figure holds still until the shared exit fade.
       if(tvGroup){
         var camZ4 = camera.position.z;
         var vFOV4 = camera.fov * Math.PI/180;
         var visH4 = 2 * Math.tan(vFOV4/2) * Math.abs(camZ4);
         var visW4 = visH4 * camera.aspect;
-        var tvScale = visH4 * (isMobile ? 0.40 : 0.32);
+        var tvScale = visH4 * (isMobile ? 0.62 : 0.5);
         tvGroup.scale.setScalar(tvScale);
 
-        var RISE_START = 0.28, RISE_END = 0.48, SCREEN_END = 0.56;
+        var RISE_START = 0.28, RISE_END = 0.46, SCREEN_END = 0.54;
         var riseT = clamp((progress-RISE_START)/(RISE_END-RISE_START), 0, 1);
         var riseEase = riseT*riseT*(3-2*riseT);
         var screenT = clamp((progress-RISE_END)/(SCREEN_END-RISE_END), 0, 1);
         var vignetteExit = 1 - clamp((progress-0.90)/0.10, 0, 1);
 
-        tvGroup.position.set(0, lerp(-visH4*0.22, -visH4*0.30, riseEase), 2.4);
-        tvGroup.scale.multiplyScalar(lerp(0.72, 1, riseEase));
-
-        // Idle breathing + float, damped out for reduced-motion visitors.
-        var idleAmp = reduceMotion ? 0 : 1;
-        var breathe = 1 + Math.sin(elapsed*1.15) * 0.012 * idleAmp;
-        tvGroup.scale.y *= breathe;
-        var floatY = Math.sin(elapsed*0.9) * 0.028 * riseEase * idleAmp;
-        tvGroup.position.y += floatY;
-        tvGroup.rotation.y = Math.sin(elapsed*0.5) * 0.05 * idleAmp;
-
-        // Pointer-based head/body tracking, reusing this scene's already-
-        // damped `pointer` values -- restrained, capped rotation so it
-        // reads as attentiveness rather than a jerky look-at.
-        if(tvHeadPivot){
-          var headTargetY = pointer.x * 0.32 * idleAmp;
-          var headTargetX = -pointer.y * 0.18 * idleAmp;
-          tvHeadPivot.rotation.y = lerp(tvHeadPivot.rotation.y, headTargetY, Math.min(1, dt*3));
-          tvHeadPivot.rotation.x = lerp(tvHeadPivot.rotation.x, headTargetX, Math.min(1, dt*3));
-        }
-        tvGroup.rotation.y += pointer.x * 0.05 * idleAmp;
+        // Grounded: fixed floor position, only a small settle-in rise
+        // (not a persistent float/bob).
+        tvGroup.position.set(0, -visH4*0.30 + (1-riseEase)*0.06, 2.4);
+        tvGroup.scale.multiplyScalar(lerp(0.85, 1, riseEase));
 
         if(screenMat) screenMat.opacity = screenT * vignetteExit;
-        if(screenGlowMat){
-          // Subtle CRT flicker: mostly steady, with rare short dips --
-          // tasteful rather than chaotic.
-          var flick = 1 - (idleAmp * 0.06 * Math.max(0, Math.sin(elapsed*23.0) * Math.sin(elapsed*2.1) - 0.85) * 6);
-          screenGlowMat.opacity = screenT * 0.5 * vignetteExit * flick;
-        }
-        if(tvGroup.userData.screenBounce) tvGroup.userData.screenBounce.intensity = screenT * 0.6 * vignetteExit;
+        if(tvGroup.userData.screenBounce) tvGroup.userData.screenBounce.intensity = screenT * 0.25 * vignetteExit;
         if(tvGroup.userData.shadowMat) tvGroup.userData.shadowMat.opacity = 0.7 * riseEase * vignetteExit;
 
-        // Cable secondary motion: each cable pivot sways on a phase-
-        // delayed sine so they trail slightly behind the body's own
-        // idle motion instead of moving in lockstep.
+        // Cable secondary motion: very subtle, phase-delayed, damped for
+        // reduced-motion visitors.
+        var idleAmp = reduceMotion ? 0 : 1;
         tvCables.forEach(function(c){
-          var sway = Math.sin(elapsed*1.3 + c.phase) * c.amp * idleAmp * riseEase;
-          c.group.rotation.z = sway * 0.6;
-          c.group.rotation.x = sway * 0.35;
+          var sway = Math.sin(elapsed*1.1 + c.phase) * c.amp * idleAmp * riseEase;
+          c.group.rotation.z = sway * 0.5;
+          c.group.rotation.x = sway * 0.3;
         });
 
-        // Wave + "Hi!"
-        var WAVE_IN_START = 0.55, WAVE_PEAK = 0.62, WAVE_OUT_END = 0.72;
+        // Single restrained wave, once, no looping bobbing before/after it.
+        var WAVE_IN_START = 0.56, WAVE_PEAK = 0.63, WAVE_OUT_END = 0.72;
         var waveIn = clamp((progress-WAVE_IN_START)/(WAVE_PEAK-WAVE_IN_START), 0, 1);
         var waveOut = 1 - clamp((progress-WAVE_PEAK)/(WAVE_OUT_END-WAVE_PEAK), 0, 1);
-        var waveEnvelope = Math.min(waveIn, waveOut) * vignetteExit;
+        var waveEnvelope = Math.min(waveIn, waveOut) * vignetteExit * idleAmp;
         if(waveShoulder){
-          var liftedZ = -1.95;
-          waveShoulder.rotation.z = lerp(-0.10, liftedZ, waveEnvelope);
+          var liftedZ = -1.7;
+          waveShoulder.rotation.z = lerp(-0.08, liftedZ, waveEnvelope);
           var elbowNode = waveShoulder.children[1];
-          if(elbowNode) elbowNode.rotation.z = -0.06 + Math.sin(elapsed*10) * 0.45 * waveEnvelope;
+          if(elbowNode) elbowNode.rotation.z = -0.05 + Math.sin(elapsed*9) * 0.35 * waveEnvelope;
         }
-        if(tvHiSpriteMat) tvHiSpriteMat.opacity = waveEnvelope;
 
         var overallOpacity = vignetteExit;
         tvGroup.traverse(function(node){
           if(node.isMesh && node.material && node !== null && 'opacity' in node.material
-             && node.material !== screenMat && node.material !== screenGlowMat
+             && node.material !== screenMat
              && node.material !== tvGroup.userData.shadowMat){
             node.material.transparent = true;
             node.material.opacity = overallOpacity;
