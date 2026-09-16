@@ -2779,11 +2779,30 @@ section{position:relative;}
         loader.load(WIRED_IDENTITY_GLB_SRC, function(gltf){
           tvGroup = gltf.scene;
 
-          var bodyMat = new THREE.MeshStandardMaterial({color:0x2a2c31, roughness:.58, metalness:.2});
-          bodyMat.transparent = true;
-          bodyMat.opacity = 1; // visible immediately -- see note below on why
+          // Two-tone palette sampled from the reference photo: a muted
+          // mauve/lavender-gray knit for the torso, and a lighter warm
+          // lavender-cream plastic for the monitor housing -- painted as
+          // per-vertex colors (split at the neck, y=0.42 in this bust's
+          // normalized space) since the source is one continuous mesh
+          // with one material slot, not separate torso/head objects.
+          var TORSO_COLOR = new THREE.Color(0x4a4552);
+          var HOUSING_COLOR = new THREE.Color(0xb0a6c0);
+          var NECK_SPLIT_Y = 0.42;
           tvGroup.traverse(function(node){
-            if(node.isMesh){ node.material = bodyMat; }
+            if(node.isMesh){
+              var geo = node.geometry;
+              var pos = geo.attributes.position;
+              var colors = new Float32Array(pos.count*3);
+              for(var vi=0; vi<pos.count; vi++){
+                var c = pos.getY(vi) > NECK_SPLIT_Y ? HOUSING_COLOR : TORSO_COLOR;
+                colors[vi*3] = c.r; colors[vi*3+1] = c.g; colors[vi*3+2] = c.b;
+              }
+              geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+              node.material = new THREE.MeshStandardMaterial({
+                vertexColors:true, roughness:.62, metalness:.06,
+                transparent:true, opacity:1
+              });
+            }
           });
 
           // ---- portrait screen: an inset plane over the CRT's front
@@ -2841,7 +2860,7 @@ section{position:relative;}
           screenMesh.position.set(-0.035, 0.821, 0.14);
           tvGroup.add(screenMesh);
 
-          var screenBounce = new THREE.PointLight(ACCENT_LIME, 0.25, 2.4, 2);
+          var screenBounce = new THREE.PointLight(0xcfc9de, 0.15, 2.4, 2);
           screenBounce.position.set(0, 0.821, 0.45);
           gl.add(screenBounce);
           tvGroup.userData.screenBounce = screenBounce;
@@ -2883,16 +2902,17 @@ section{position:relative;}
           console.error('[tvHeadCharacter] glb load failed:', err);
         });
 
-        // ---- lighting: soft key/fill, restrained rim -- added once,
-        // independent of the async load above -----------------------------
-        gl.add(new THREE.AmbientLight(0xffffff, 0.62));
-        var key = new THREE.DirectionalLight(0xf3f2ec, 1.3);
+        // ---- lighting: retuned to the reference photo's cool, soft
+        // lavender-gray studio light instead of the site's lime accent --
+        // added once, independent of the async load above ------------------
+        gl.add(new THREE.AmbientLight(0xcfc9de, 0.62));
+        var key = new THREE.DirectionalLight(0xe9e6f2, 1.25);
         key.position.set(2.2, 4.5, 5);
         gl.add(key);
-        var fill = new THREE.DirectionalLight(0xdfe6ff, 0.5);
+        var fill = new THREE.DirectionalLight(0xb7b0c8, 0.55);
         fill.position.set(-3.0, 1.2, 3.2);
         gl.add(fill);
-        var rim = new THREE.DirectionalLight(ACCENT_LIME, 0.55);
+        var rim = new THREE.DirectionalLight(0xd9d2e8, 0.4);
         rim.position.set(-2.2, 1.0, -1.0);
         gl.add(rim);
       } catch(err){
@@ -3626,7 +3646,7 @@ section{position:relative;}
         tvGroup.position.set(0, -tvScale*0.5 - visH4*0.03, 2.4);
 
         var vignetteExit = 1 - clamp((progress-0.90)/0.10, 0, 1);
-        if(tvGroup.userData.screenBounce) tvGroup.userData.screenBounce.intensity = 0.25 * vignetteExit;
+        if(tvGroup.userData.screenBounce) tvGroup.userData.screenBounce.intensity = 0.15 * vignetteExit;
         if(screenMat) screenMat.opacity = vignetteExit;
 
         tvGroup.traverse(function(node){
