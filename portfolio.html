@@ -3003,12 +3003,11 @@ section{position:relative;}
         tvGroup.scale.setScalar(bustScale0);
         // Local mesh space: y=0 is the ragged neck/shoulder cut (bottom),
         // y=1 is the top of the head -- so position.y alone places the
-        // world-space height of that bottom cut. Setting it to 0 puts the
-        // cut right at the viewport's vertical center (matching the
-        // reference crop, where the bust fills the upper half of frame
-        // and the cut sits on the centerline), instead of the old
-        // vertically-centered-bust placement.
-        tvGroup.position.set(0, 0, 2.4);
+        // world-space height of that bottom cut. The viewport's bottom
+        // edge (at this object's z-plane) sits at world y = -visH/2, so
+        // that + a small margin puts the cut right at the bottom of the
+        // screen, with the head rising up into frame above it.
+        tvGroup.position.set(0, -visH0*0.5 + visH0*0.03, 2.4);
 
         // Low-key studio lighting: retain shape in the shadows without
         // bleaching the CRT or turning the sweater into lavender plastic.
@@ -3769,10 +3768,9 @@ section{position:relative;}
         var visH4 = 2 * Math.tan(vFOV4/2) * dist4;
         var tvScale = visH4 * (isMobile ? 0.7 : 0.58);
         tvGroup.scale.setScalar(tvScale);
-        // See the matching comment in buildTVHeadCharacter(): position.y=0
-        // puts the bust's bottom cut (local y=0) at the viewport's
-        // vertical center, same as the reference crop.
-        tvGroup.position.set(0, 0, 2.4);
+        // See the matching comment in buildTVHeadCharacter(): this puts
+        // the bust's bottom cut (local y=0) at the bottom of the screen.
+        tvGroup.position.set(0, -visH4*0.5 + visH4*0.03, 2.4);
 
         var tvFadeIn = clamp((progress-0.10)/0.15, 0, 1);
         var tvFadeOut = 1 - clamp((progress-0.90)/0.10, 0, 1);
