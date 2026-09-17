@@ -2825,24 +2825,37 @@ section{position:relative;}
         tvGroup = new THREE.Group();
         gl.add(tvGroup);
 
-        // The reference is a dark, softly lit CRT over a charcoal knit bust.
-        // The earlier pale materials made both pieces read as white plastic.
-        var TORSO_COLOR = 0x504750;
-        var HOUSING_COLOR = 0x343640;
+        // Colorful pass, per request: a camel cashmere turtleneck cardigan
+        // (matching the reference photo's rolled/folded high collar) and a
+        // brighter, more graphic monitor housing instead of the near-black
+        // CRT shell.
+        var TORSO_COLOR = 0xC19A6B;
+        var HOUSING_COLOR = 0xE7E1D6;
+        var SKIN_COLOR = 0xC98E68; // approximate warm mid skin tone -- barely shows now the collar rolls almost up to the housing, per the reference photo
 
         // Mipmapped knit texture, sampled in model space: the supplied GLB
         // has no UV coordinates. Deterministic grain avoids frame flicker.
         var clothCanvas = document.createElement('canvas');
         clothCanvas.width = clothCanvas.height = 128;
         var clothContext = clothCanvas.getContext('2d');
-        clothContext.fillStyle = '#929292';
+        clothContext.fillStyle = '#bd9769';
         clothContext.fillRect(0, 0, 128, 128);
         var clothSeed = 319;
         for(var ci=0; ci<1800; ci++){
           clothSeed = (Math.imul(clothSeed, 1664525) + 1013904223) >>> 0;
           var cx = clothSeed & 127, cy = (clothSeed >>> 8) & 127;
-          clothContext.fillStyle = (clothSeed & 256) ? 'rgba(255,255,255,.11)' : 'rgba(0,0,0,.12)';
+          clothContext.fillStyle = (clothSeed & 256) ? 'rgba(255,244,222,.15)' : 'rgba(60,42,18,.16)';
           clothContext.fillRect(cx, cy, 1, 1);
+        }
+        // Coarse vertical ribbing, like the reference's ribbed-knit collar
+        // (in addition to the existing diagonal weave strokes below).
+        clothContext.strokeStyle = 'rgba(60,42,18,.20)';
+        clothContext.lineWidth = 2.2;
+        for(var ribX=4; ribX<128; ribX+=11){
+          clothContext.beginPath();
+          clothContext.moveTo(ribX, 0);
+          clothContext.lineTo(ribX, 128);
+          clothContext.stroke();
         }
         clothContext.lineWidth = 1.3;
         for(var row=0; row<128; row+=8){
@@ -2891,33 +2904,80 @@ section{position:relative;}
             }
           });
           tvGroup.add(torsoScene);
-          // Closed, overlapping fabric sleeve bridges the generated mesh's
-          // ragged cut. Its lower rings stay attached to the shoulders.
-          var sleeveProfile = [new THREE.Vector2(0,0.30)];
-          for(var ring=0; ring<=24; ring++){
-            var u = ring/24;
-            var radius = 0.175 - 0.067*(u*u*(3-2*u));
-            sleeveProfile.push(new THREE.Vector2(radius,0.30+u*0.25));
+          // Closed, overlapping fabric bridges the generated mesh's ragged
+          // cut, same overall envelope as before (still spans the y range
+          // the head glass-shell culling below relies on to hide its own
+          // seam) -- reshaped per the reference photo into a tall, rolled
+          // turtleneck: the collar now rises almost all the way to the
+          // housing (COLLAR_SPLIT_U near 1), with a folded-over lip (an
+          // outward flare right before the top) instead of tapering to a
+          // point, and only a hairline of bare neck shows above it.
+          function wiredCollarRadius(u){
+            var base = 0.175 - 0.067*(u*u*(3-2*u));
+            var foldT = clamp((u-0.78)/0.17, 0, 1);
+            var fold = Math.sin(foldT*Math.PI) * 0.028; // the rolled/folded lip
+            return base + fold;
           }
-          sleeveProfile.push(new THREE.Vector2(0,0.55));
-          var sleeveGeometry = new THREE.LatheGeometry(sleeveProfile,64);
-          sleeveGeometry.scale(1,1,0.84);
-          sleeveGeometry.translate(NECK_PIVOT.x,0,NECK_PIVOT.z);
+          var COLLAR_SPLIT_U = 0.94;
+          var collarProfile = [new THREE.Vector2(0,0.30)];
+          for(var ring=0; ring<=28; ring++){
+            var u = (ring/28)*COLLAR_SPLIT_U;
+            collarProfile.push(new THREE.Vector2(wiredCollarRadius(u),0.30+u*0.25));
+          }
+          var collarGeometry = new THREE.LatheGeometry(collarProfile,64);
+          collarGeometry.scale(1,1,0.84);
+          collarGeometry.translate(NECK_PIVOT.x,0,NECK_PIVOT.z);
+
+          var neckSkinProfile = [];
+          for(var ring2=0; ring2<=6; ring2++){
+            var u2 = COLLAR_SPLIT_U + (ring2/6)*(1-COLLAR_SPLIT_U);
+            neckSkinProfile.push(new THREE.Vector2(wiredCollarRadius(u2),0.30+u2*0.25));
+          }
+          neckSkinProfile.push(new THREE.Vector2(0,0.55));
+          var neckSkinGeometry = new THREE.LatheGeometry(neckSkinProfile,64);
+          neckSkinGeometry.scale(1,1,0.84);
+          neckSkinGeometry.translate(NECK_PIVOT.x,0,NECK_PIVOT.z);
+
           var sleeveSource;
           torsoScene.traverse(function(node){ if(node.isMesh && !sleeveSource) sleeveSource=node.material; });
           if(sleeveSource){
-            var sleeveMaterial = sleeveSource.clone();
-            sleeveMaterial.onBeforeCompile = sleeveSource.onBeforeCompile;
-            sleeveMaterial.customProgramCacheKey = sleeveSource.customProgramCacheKey;
-            sleeveMaterial.depthWrite = true;
-            var sleeve = new THREE.Mesh(sleeveGeometry,sleeveMaterial);
-            sleeve.position.set(-NECK_PIVOT.x,-NECK_PIVOT.y,-NECK_PIVOT.z);
-            headPivot.add(sleeve);
-            registerWiredNeck(sleeve);
+            var collarMaterial = sleeveSource.clone();
+            collarMaterial.onBeforeCompile = sleeveSource.onBeforeCompile;
+            collarMaterial.customProgramCacheKey = sleeveSource.customProgramCacheKey;
+            collarMaterial.depthWrite = true;
+            var collar = new THREE.Mesh(collarGeometry,collarMaterial);
+            collar.position.set(-NECK_PIVOT.x,-NECK_PIVOT.y,-NECK_PIVOT.z);
+            headPivot.add(collar);
+            registerWiredNeck(collar);
+
+            var neckSkinMaterial = new THREE.MeshStandardMaterial({
+              color: SKIN_COLOR, roughness:.72, metalness:0,
+              transparent:true, opacity:1, depthWrite:true
+            });
+            var neckSkin = new THREE.Mesh(neckSkinGeometry,neckSkinMaterial);
+            neckSkin.position.set(-NECK_PIVOT.x,-NECK_PIVOT.y,-NECK_PIVOT.z);
+            headPivot.add(neckSkin);
+            registerWiredNeck(neckSkin);
           }
         }, undefined, function(err){
           console.error('[tvHeadCharacter] torso glb load failed:', err);
         });
+
+        // The actual photo, shown "under the screen" -- painted straight
+        // onto the glass region of the shader below (mapped into the same
+        // model-space glass rectangle the glassMask already isolates)
+        // instead of a separate floating plane, so it curves with the
+        // glass and stays exactly registered with the housing.
+        var portraitTexture = new THREE.Texture();
+        portraitTexture.wrapS = portraitTexture.wrapT = THREE.ClampToEdgeWrapping;
+        if(typeof PORTRAIT_IMG_SRC === 'string'){
+          var portraitImgEl = new Image();
+          portraitImgEl.onload = function(){
+            portraitTexture.image = portraitImgEl;
+            portraitTexture.needsUpdate = true;
+          };
+          portraitImgEl.src = PORTRAIT_IMG_SRC;
+        }
 
         loader.load(WIRED_HEAD_GLB_SRC, function(gltf){
           var headScene = gltf.scene;
@@ -2949,11 +3009,12 @@ section{position:relative;}
               // separate plane in front of it. Coordinates are measured
               // in the GLB's front-face frame, rotated 0.35 rad about Y.
               node.material.onBeforeCompile = function(shader){
+                shader.uniforms.uPortraitTex = {value:portraitTexture};
                 shader.vertexShader = shader.vertexShader
                   .replace('#include <common>', '#include <common>\nvarying vec3 vWiredPosition;\nvarying vec3 vWiredGlassNormal;')
                   .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWiredPosition = position;\nvec2 glassXY = vec2(dot(position.xz,vec2(0.9393727,0.3428978)) + 0.024, position.y - 0.776);\nvWiredGlassNormal = normalMatrix * normalize(vec3(-0.3428978 + glassXY.x*0.24, glassXY.y*0.24, 0.9393727));');
                 shader.fragmentShader = shader.fragmentShader
-                  .replace('#include <common>', '#include <common>\nvarying vec3 vWiredPosition;\nvarying vec3 vWiredGlassNormal;')
+                  .replace('#include <common>', '#include <common>\nvarying vec3 vWiredPosition;\nvarying vec3 vWiredGlassNormal;\nuniform sampler2D uPortraitTex;')
                   .replace('#include <color_fragment>', [
                     '#include <color_fragment>',
                     'vec3 fp = vec3(dot(vWiredPosition.xz,vec2(0.9393727,0.3428978)),vWiredPosition.y,dot(vWiredPosition.xz,vec2(-0.3428978,0.9393727)));',
@@ -2964,12 +3025,24 @@ section{position:relative;}
                     'diffuseColor.rgb = mix(vec3(0.12,0.115,0.14),diffuseColor.rgb,shellMask);',
                     'float sideTint = smoothstep(0.10,0.21,fp.x)*(1.0-smoothstep(0.09,0.18,fp.z))*shellMask;',
                     'diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.12,0.16,0.235),sideTint*0.65);',
-                    'diffuseColor.rgb = mix(diffuseColor.rgb,vec3(0.013,0.011,0.017),glassMask);'
+                    // Show the real photo under the glass instead of a flat
+                    // dark panel: map this fragment's position within the
+                    // glass rectangle to 0..1 UVs and sample the portrait.
+                    // fp.y increases upward in model space, matching the
+                    // V-up convention THREE's default flipY texture upload
+                    // already corrects photos to -- no extra flip needed.
+                    'vec2 portraitUV = clamp((fp.xy-(vec2(-0.024,0.776)-vec2(0.178,0.147)))/(2.0*vec2(0.178,0.147)),0.0,1.0);',
+                    'vec3 portraitColor = texture2D(uPortraitTex, portraitUV).rgb;',
+                    'portraitColor = pow(portraitColor, vec3(2.2));', // stored sRGB -> linear before lighting
+                    'float portraitLuma = dot(portraitColor, vec3(0.299,0.587,0.114));',
+                    'portraitColor = clamp(mix(vec3(portraitLuma), portraitColor, 1.35), 0.0, 1.0);', // a bit more colorful/graphic than a flat photo
+                    'diffuseColor.rgb = mix(diffuseColor.rgb,portraitColor,glassMask);'
                   ].join('\n'))
                   .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor,0.31,glassMask);')
-                  .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal,normalize(vWiredGlassNormal),glassMask));');
+                  .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\nnormal = normalize(mix(normal,normalize(vWiredGlassNormal),glassMask));')
+                  .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += portraitColor * glassMask * 0.5;'); // screen glows softly with the photo, rather than reading dim/flat like painted plastic
               };
-              node.material.customProgramCacheKey = function(){ return 'wired-integrated-glass-v2'; };
+              node.material.customProgramCacheKey = function(){ return 'wired-integrated-glass-v3'; };
               registerWiredNeck(node);
             }
           });
