@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shaivil Patel — Portfolio
 
-## Getting Started
+Personal portfolio site, built as a single self-contained HTML file
+(`portfolio.html`) — no build step, no framework, no bundler. All styles,
+scripts, and media (images/3D assets) are inlined directly in the file.
 
-First, run the development server:
+## Running locally
+
+Just open `portfolio.html` in a browser, or serve the folder with any static
+file server, e.g.:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python3 -m http.server 8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+then visit `http://localhost:8000/portfolio.html`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deployed via GitHub Pages from this repository:
+https://patelshaivil-source.github.io/SP-Portfolio/
 
-## Learn More
+## Editing
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Since everything lives in `portfolio.html`, just edit that file directly and
+commit/push the change — there's no separate source tree or build process to
+run.
