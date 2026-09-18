@@ -3098,7 +3098,11 @@ section{position:relative;}
         console.error('[tvHeadCharacter] build failed:', err);
       }
     }
-    buildTVHeadCharacter();
+    // TV-head 3D character removed per request. The build function is kept
+    // intact (not deleted) so it can be restored with this one-line
+    // uncomment; everything downstream (draw() head-tracking, fades) is
+    // already guarded on `tvGroup` being non-null, so it's a clean no-op.
+    // buildTVHeadCharacter();
     // Image removed per request: the hero shows no photo/3D object at all
     // now, just the name/role text and the existing particle/code-rain
     // background. Left the disabled calls below (rather than deleting the
