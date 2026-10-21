@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><script>(function(){try{if(navigator.maxTouchPoints>1){var d=window.devicePixelRatio||1;if(d>1.5)Object.defineProperty(window,"devicePixelRatio",{get:function(){return 1.5},configurable:true})}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shaivil Patel — Co-Founder of Askstein | AI Generalist</title>
 <meta name="description" content="Shaivil Patel — Co-Founder of Askstein. Evidence-grounded AI, RAG and workflow automation for healthcare teams.">
@@ -1267,6 +1267,14 @@ section{position:relative;}
 @media (max-width:700px){#work #orbitTrack{--pw:min(38vw,24vh);grid-template-columns:repeat(2,var(--pw))}}
 @media (prefers-reduced-motion:reduce){#work #orbitTrack .orbit-card{animation:none!important}}
 .flip-back .orbit-card-detail-scroll{overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;outline:none}.flip-wrap,.flip-back{overscroll-behavior:contain;-webkit-tap-highlight-color:transparent}.flip-backdrop{cursor:pointer}
+
+/* calm text: no movement, smooth eased opacity fades only */
+.profile-heading,.profile-card,.profile-bio{transform:none!important;will-change:opacity;transition:opacity .6s cubic-bezier(.33,.1,.25,1)!important}
+.hero-markers{will-change:opacity;transition:opacity .6s ease!important}
+.hero-center{transition:opacity .6s ease!important}
+.manifesto-lines p,.manifesto-detail,#manifestoEyebrow{will-change:opacity;transition:opacity .6s cubic-bezier(.33,.1,.25,1)!important}
+#work .orbit-header .reveal{transform:none!important;transition:opacity .9s ease!important}
+.hero-stage,.hero-canvas,.hero-coderain{-webkit-transform:translateZ(0);transform:translateZ(0)}
 </style></head>
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
