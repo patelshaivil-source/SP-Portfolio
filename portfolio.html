@@ -1275,6 +1275,12 @@ section{position:relative;}
 .manifesto-lines p,.manifesto-detail,#manifestoEyebrow{will-change:opacity;transition:opacity .6s cubic-bezier(.33,.1,.25,1)!important}
 #work .orbit-header .reveal{transform:none!important;transition:opacity .9s ease!important}
 .hero-stage,.hero-canvas,.hero-coderain{-webkit-transform:translateZ(0);transform:translateZ(0)}
+
+/* scroll-perf + pin fixes */
+html,body{overflow-x:clip!important;overflow-y:visible!important}
+.hero-stage{position:-webkit-sticky;position:sticky;-webkit-transform:none!important;transform:none!important}
+.hero-canvas,.hero-coderain{-webkit-transform:none!important;transform:none!important}
+.ambient-field{animation:none!important}
 </style></head>
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
@@ -2019,10 +2025,12 @@ section{position:relative;}
   // never assumes 16ms frames, so timing stays correct under throttling.
   function createLoop(drawFn){
     var running = false, frame = null, lastT = null;
+    var FRAME_CAP = (navigator.maxTouchPoints > 1) ? 30 : 0;
     function tick(now){
       if(!running) return;
       if(!document.hidden){
         if(lastT === null) lastT = now;
+        if(FRAME_CAP && (now - lastT) < FRAME_CAP){ frame = requestAnimationFrame(tick); return; }
         var dt = Math.min((now - lastT) / 1000, 0.1); // clamp to avoid huge jumps after a stall
         lastT = now;
         drawFn(dt);
@@ -2258,12 +2266,12 @@ section{position:relative;}
       return;
     }
     var w,h,dpr;
-    var lowPower = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+    var lowPower = isMobile || navigator.maxTouchPoints > 1 || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
     // "ONE BUILDER INSIDE A WORLD OF SYSTEMS" — sparse ambient dust and a
     // luminous terrain provide atmosphere; the halftone portrait built
     // further down (PORTRAIT — real photo, sampled to points) is the one
     // deliberate figure in the frame, everything else stays secondary.
-    var count = isMobile ? 90 : 260;
+    var count = (isMobile || navigator.maxTouchPoints > 1) ? 90 : 260;
     var paperColor = 0xf5f1e8, terrainColor = 0xaebdd0; // warm-white dust, cool blue-gray terrain light
     var renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:!lowPower, powerPreference:'high-performance'});
     var camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
@@ -4747,7 +4755,7 @@ section{position:relative;}
     var CLICK_PALETTE = [ACCENT, 0xE00000, 0x2247FF, 0xFFD400]; // green, red, blue, yellow -- blue pushed more saturated/pure to match red's punch
     var COLOR_TWEEN_DURATION = 0.5; // seconds, within the requested 0.4-0.6s window
     function easeOutCubic(x){ return 1 - Math.pow(1 - x, 3); }
-    var lowPower = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+    var lowPower = isMobile || navigator.maxTouchPoints > 1 || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
 
     var renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:!lowPower, powerPreference:'high-performance'});
     // sRGB + filmic tone mapping on this renderer only (scoped to this
@@ -6305,5 +6313,7 @@ document.addEventListener('click',function(e){var c=e.target.closest&&e.target.c
 document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var c=e.target.closest&&e.target.closest('#orbitTrack .orbit-card');if(!c||open)return;e.stopImmediatePropagation();e.preventDefault();openCard(c)},true);
 window.addEventListener('pageshow',function(ev){if(ev.persisted||open){reset()}});
 document.addEventListener('visibilitychange',function(){if(!document.hidden&&open&&!live())reset()});
+})();</script><script id="perf-pause">(function(){var w=document.getElementById('work');if(!w||!('IntersectionObserver' in window))return;function set(p){[].forEach.call(document.querySelectorAll('#orbitTrack svg'),function(s){try{p?s.pauseAnimations():s.unpauseAnimations()}catch(e){}})}
+new IntersectionObserver(function(es){set(!es[0].isIntersecting)},{rootMargin:'120px'}).observe(w);set(true);
 })();</script></body>
 </html>
