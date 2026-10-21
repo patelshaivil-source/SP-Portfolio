@@ -1224,30 +1224,39 @@ section{position:relative;}
 ::selection{background:var(--accent); color:var(--ink);}
 </style>
 <style id="spread-grid">
-#work.orbit-stage{height:auto!important;min-height:100vh;overflow:visible!important;padding-bottom:6vh}
+#work.orbit-stage{height:auto!important;min-height:100vh;overflow:visible!important;padding-bottom:7vh}
 #work .orbit-carousel{transform:none!important;height:auto!important;display:block!important;margin-top:3vh}
 #work .orbit-viewport{height:auto!important;display:block!important;overflow:visible!important}
-#work #orbitTrack{--pw:min(13vw,21vh);position:static!important;height:auto!important;width:auto!important;display:grid!important;grid-template-columns:repeat(4,var(--pw));gap:clamp(40px,7vh,80px) clamp(40px,5.5vw,100px);justify-content:center;perspective:1400px!important;transform:none!important}
+#work #orbitTrack{--pw:min(15.5vw,25vh);position:static!important;height:auto!important;width:auto!important;display:grid!important;grid-template-columns:repeat(4,var(--pw));gap:clamp(44px,8vh,90px) 0;justify-content:space-between;padding:0 clamp(24px,6vw,120px);perspective:1400px!important;transform:none!important}
 #work #orbitTrack .orbit-card-clone{display:none!important}
-#work #orbitTrack .orbit-card:not(.is-expanded){position:static!important;opacity:1!important;visibility:visible!important;filter:none!important;left:auto!important;top:auto!important;margin:0!important;width:var(--pw)!important;height:calc(var(--pw) * 1.4)!important;cursor:pointer;animation:cardFloat 6s ease-in-out infinite;will-change:transform;transform-style:preserve-3d}
-#work #orbitTrack .orbit-card:not(.is-expanded):hover{animation-play-state:paused}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+1){--ox:-2vw;--oy:2vh;--r:-5deg;--ry:-7deg;animation-delay:-0s;animation-duration:6s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+2){--ox:1.5vw;--oy:-3vh;--r:4deg;--ry:7deg;animation-delay:-1.2s;animation-duration:7s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+3){--ox:-1vw;--oy:4vh;--r:-3deg;--ry:-7deg;animation-delay:-2.6s;animation-duration:6.4s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+4){--ox:2.5vw;--oy:-1vh;--r:6deg;--ry:7deg;animation-delay:-3.4s;animation-duration:7.4s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+5){--ox:2vw;--oy:1vh;--r:3deg;--ry:7deg;animation-delay:-4.2s;animation-duration:6.8s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+6){--ox:-2.5vw;--oy:3vh;--r:-6deg;--ry:-7deg;animation-delay:-0.8s;animation-duration:7.2s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+7){--ox:1vw;--oy:-2.5vh;--r:5deg;--ry:7deg;animation-delay:-3s;animation-duration:6.2s}
-#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+8){--ox:-2vw;--oy:2vh;--r:-4deg;--ry:-7deg;animation-delay:-5s;animation-duration:7.6s}
+#work #orbitTrack .orbit-card{position:static!important;opacity:1!important;visibility:visible!important;filter:none!important;left:auto!important;top:auto!important;margin:0!important;width:var(--pw)!important;height:calc(var(--pw) * 1.4)!important;cursor:pointer;animation:cardFloat 6s ease-in-out infinite;will-change:transform;transform-style:preserve-3d;justify-self:center}
+#work #orbitTrack .orbit-card.is-open{visibility:hidden!important;animation-play-state:paused!important}
+#work #orbitTrack .orbit-card:not(.is-open):hover{animation-play-state:paused}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+1){--ox:-1.5vw;--oy:2vh;--r:-4deg;--ry:-6deg;animation-delay:-0s;animation-duration:6s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+2){--ox:1.2vw;--oy:-3vh;--r:3.5deg;--ry:6deg;animation-delay:-1.2s;animation-duration:7s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+3){--ox:-1vw;--oy:3vh;--r:-3deg;--ry:-6deg;animation-delay:-2.6s;animation-duration:6.4s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+4){--ox:2vw;--oy:-1.5vh;--r:5deg;--ry:6deg;animation-delay:-3.4s;animation-duration:7.4s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+5){--ox:1.5vw;--oy:1vh;--r:3deg;--ry:6deg;animation-delay:-4.2s;animation-duration:6.8s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+6){--ox:-2vw;--oy:3vh;--r:-5deg;--ry:-6deg;animation-delay:-0.8s;animation-duration:7.2s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+7){--ox:1vw;--oy:-2.5vh;--r:4deg;--ry:6deg;animation-delay:-3s;animation-duration:6.2s}
+#work #orbitTrack .orbit-card:not(.is-expanded):nth-child(8n+8){--ox:-1.5vw;--oy:2vh;--r:-3.5deg;--ry:-6deg;animation-delay:-5s;animation-duration:7.6s}
 @keyframes cardFloat{0%,100%{transform:translate(var(--ox,0),var(--oy,0)) rotate(var(--r,0deg)) rotateY(var(--ry,0deg))}50%{transform:translate(calc(var(--ox,0) * -.6),calc(var(--oy,0) - 1.8vh)) rotate(calc(var(--r,0deg) * -.7)) rotateY(calc(var(--ry,0deg) * -1))}}
-#work #orbitTrack .orbit-card-title{font-size:clamp(.62rem,.95vw,.9rem)!important;line-height:1.12}
-#work #orbitTrack .orbit-card-cat,#work #orbitTrack .orbit-card-stack,#work #orbitTrack .orbit-card-num,#work #orbitTrack .orbit-card-cue{font-size:clamp(.42rem,.55vw,.56rem)!important}
-#work #orbitTrack .orbit-card-stack{display:none}
-.orbit-card-detail .project-body{opacity:1!important;transform:none!important;visibility:visible!important}
-.orbit-card-detail .line-inner,.orbit-card-detail .line-mask *{opacity:1!important;transform:none!important}
-@media (max-width:1100px){#work #orbitTrack{--pw:min(30vw,20vh);grid-template-columns:repeat(4,var(--pw));column-gap:3vw}}
+#work #orbitTrack .orbit-card-face,.flip-front .orbit-card-face{container-type:inline-size}
+#work #orbitTrack .orbit-card-title,.flip-front .orbit-card-title{font-size:max(10px,5.6cqw)!important;line-height:1.12}
+#work #orbitTrack .orbit-card-cat,#work #orbitTrack .orbit-card-num,#work #orbitTrack .orbit-card-cue,.flip-front .orbit-card-cat,.flip-front .orbit-card-num,.flip-front .orbit-card-cue{font-size:max(7px,2.7cqw)!important}
+#work #orbitTrack .orbit-card-stack,.flip-front .orbit-card-stack{display:none}
+.flip-backdrop{position:fixed;inset:0;z-index:9998;background:rgba(5,6,6,.62);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0}
+.flip-wrap{position:fixed;z-index:9999;perspective:2400px;-webkit-perspective:2400px;cursor:pointer}
+.flip-rot{position:absolute;inset:0;transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+.flip-front,.flip-back{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;transform:none;-webkit-backface-visibility:hidden;backface-visibility:hidden;overflow:hidden}
+.flip-back{transform:rotateY(180deg)!important;cursor:default}
+.flip-back .orbit-card-detail{display:block!important;opacity:1!important;visibility:visible!important;position:absolute!important;inset:0!important;transform:none!important;width:auto!important;height:auto!important}
+.flip-front .orbit-card-face{opacity:1!important;visibility:visible!important;-webkit-backface-visibility:visible!important;backface-visibility:visible!important;transform:none!important}
+.flip-back .project-body{opacity:1!important;transform:none!important;visibility:visible!important}
+.flip-back .line-inner,.flip-back .line-mask *{opacity:1!important;transform:none!important}
+@media (max-width:1100px){#work #orbitTrack{--pw:min(22vw,22vh);padding:0 3vw}}
 @media (max-width:700px){#work #orbitTrack{--pw:min(38vw,24vh);grid-template-columns:repeat(2,var(--pw))}}
-@media (prefers-reduced-motion:reduce){#work #orbitTrack .orbit-card:not(.is-expanded){animation:none!important}}
+@media (prefers-reduced-motion:reduce){#work #orbitTrack .orbit-card{animation:none!important}}
 </style></head>
 <body>
 <a href="#main" class="skip-link">Skip to content</a>
@@ -6412,5 +6421,45 @@ section{position:relative;}
   io.observe(zone);
 })();
 </script>
-</body>
+<script id="flip-open">(function(){var open=null;
+function ang(el){var m=new DOMMatrix(getComputedStyle(el).transform);return Math.atan2(m.b,m.a)*180/Math.PI}
+function dur(n){return matchMedia('(prefers-reduced-motion: reduce)').matches?1:n}
+function openCard(card){if(open)return;var inner=card.querySelector('.orbit-card-inner');var det=card.querySelector('.orbit-card-detail');if(!inner||!det)return;
+var rect=card.getBoundingClientRect(),w=card.offsetWidth,h=card.offsetHeight,cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,a0=ang(card);
+card.classList.add('is-open');
+var bd=document.createElement('div');bd.className='flip-backdrop';
+var wrap=document.createElement('div');wrap.className='flip-wrap';wrap.setAttribute('role','dialog');wrap.setAttribute('aria-modal','true');
+var rot=document.createElement('div');rot.className='flip-rot';
+var front=inner.cloneNode(true);front.classList.add('flip-front');[].forEach.call(front.querySelectorAll('.orbit-card-back,.orbit-card-detail'),function(x){x.remove()});
+var back=inner.cloneNode(true);back.classList.add('flip-back');[].forEach.call(back.querySelectorAll('.orbit-card-face,.orbit-card-back'),function(x){x.remove()});var bdet=back.querySelector('.orbit-card-detail');bdet.removeAttribute('hidden');
+rot.appendChild(front);rot.appendChild(back);wrap.appendChild(rot);document.body.appendChild(bd);document.body.appendChild(wrap);
+var W=Math.min(720,innerWidth*.92),H=Math.min(innerHeight*.88,820),L=(innerWidth-W)/2,T=(innerHeight-H)/2;
+var st={left:(cx-w/2)+'px',top:(cy-h/2)+'px',width:w+'px',height:h+'px',transform:'rotate('+a0+'deg)'};
+var en={left:L+'px',top:T+'px',width:W+'px',height:H+'px',transform:'rotate(0deg)'};
+var D=dur(850),ease='cubic-bezier(.22,.8,.2,1)';
+Object.assign(wrap.style,st);
+var a1=wrap.animate([st,en],{duration:D,easing:ease,fill:'forwards'});
+var a2=rot.animate([{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)'}],{duration:D,easing:'cubic-bezier(.5,.05,.25,1)',fill:'forwards'});
+var a3=bd.animate([{opacity:0},{opacity:1}],{duration:D*.7,fill:'forwards'});
+open={card:card,bd:bd,wrap:wrap,rot:rot,a1:a1,a2:a2,a3:a3,busy:true,w:w,h:h};
+a1.finished.then(function(){if(open)open.busy=false}).catch(function(){});
+bd.addEventListener('click',close);wrap.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('a'))return;close()});
+var cl=bdet.querySelector('.orbit-card-close');if(cl)cl.addEventListener('click',function(e){e.stopPropagation();close()});
+document.addEventListener('keydown',onKey)}
+function onKey(e){if(e.key==='Escape')close()}
+function close(){if(!open||open.closing)return;var o=open;o.closing=true;document.removeEventListener('keydown',onKey);
+var card=o.card,rect=card.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+var cur=o.wrap.getBoundingClientRect();
+var st={left:cur.left+'px',top:cur.top+'px',width:cur.width+'px',height:cur.height+'px',transform:'rotate(0deg)'};
+var en={left:(cx-o.w/2)+'px',top:(cy-o.h/2)+'px',width:o.w+'px',height:o.h+'px',transform:'rotate('+ang(card)+'deg)'};
+var D=dur(750),ease='cubic-bezier(.45,.05,.2,1)';
+var m=new DOMMatrix(getComputedStyle(o.rot).transform);var ry=Math.atan2(m.m13||0,m.m11||1)*180/Math.PI;if(!isFinite(ry)||Math.abs(ry)<1)ry=180;ry=Math.abs(ry);
+o.a1.cancel();o.a2.cancel();o.a3.cancel();Object.assign(o.wrap.style,st);o.rot.style.transform='rotateY('+ry+'deg)';
+var b1=o.wrap.animate([st,en],{duration:D,easing:ease,fill:'forwards'});
+var b2=o.rot.animate([{transform:'rotateY('+ry+'deg)'},{transform:'rotateY(0deg)'}],{duration:D,easing:ease,fill:'forwards'});
+var b3=o.bd.animate([{opacity:1},{opacity:0}],{duration:D,fill:'forwards'});
+b1.finished.then(function(){card.classList.remove('is-open');o.wrap.remove();o.bd.remove();open=null}).catch(function(){card.classList.remove('is-open');o.wrap.remove();o.bd.remove();open=null})}
+document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('#orbitTrack .orbit-card');if(!c)return;e.stopImmediatePropagation();e.preventDefault();openCard(c)},true);
+document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var c=e.target.closest&&e.target.closest('#orbitTrack .orbit-card');if(!c||open)return;e.stopImmediatePropagation();e.preventDefault();openCard(c)},true);
+})();</script></body>
 </html>
