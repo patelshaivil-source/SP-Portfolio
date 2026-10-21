@@ -1227,12 +1227,16 @@ section{position:relative;}
 #work.orbit-stage{height:auto!important;min-height:100vh;overflow:visible!important;padding-bottom:6vh}
 #work .orbit-carousel{transform:none!important;height:auto!important;display:block!important;padding:0 clamp(16px,4vw,64px);margin-top:2.5vh}
 #work .orbit-viewport{height:auto!important;display:block!important;overflow:visible!important}
-#work #orbitTrack{position:static!important;height:auto!important;width:auto!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.6vw,26px);perspective:none!important;transform:none!important}
-#work #orbitTrack .orbit-card{position:static!important;transform:none!important;opacity:1!important;visibility:visible!important;filter:none!important;width:100%!important;height:auto!important;min-height:0;left:auto!important;top:auto!important;margin:0!important;cursor:pointer;transition:transform .25s ease,border-color .25s ease}
-#work #orbitTrack .orbit-card:hover{transform:translateY(-6px)!important}
+#work #orbitTrack{position:static!important;height:auto!important;width:auto!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(30px,3vw,48px) clamp(12px,1.6vw,26px);transform:none!important}
+#work #orbitTrack .orbit-card{position:static!important;opacity:1!important;visibility:visible!important;filter:none!important;width:100%!important;height:auto!important;min-height:0;left:auto!important;top:auto!important;margin:0!important;cursor:pointer;transition:border-color .25s ease;animation:cardFloat 6s ease-in-out infinite;will-change:transform;transform-style:preserve-3d}
+#work #orbitTrack .orbit-card:hover{animation-play-state:paused;border-color:#c6ff3d}
+#work #orbitTrack{perspective:1400px!important}
+#work #orbitTrack .orbit-card:nth-child(8n+1){animation-delay:-0s;--r:-1.6deg;--ry:6deg;animation-duration:6s}#work #orbitTrack .orbit-card:nth-child(8n+2){animation-delay:-1.2s;--r:1.2deg;--ry:-5deg;animation-duration:7s}#work #orbitTrack .orbit-card:nth-child(8n+3){animation-delay:-2.6s;--r:-1deg;--ry:4deg;animation-duration:6.4s}#work #orbitTrack .orbit-card:nth-child(8n+4){animation-delay:-3.4s;--r:1.8deg;--ry:-6deg;animation-duration:7.4s}#work #orbitTrack .orbit-card:nth-child(8n+5){animation-delay:-4.2s;--r:1.4deg;--ry:5deg;animation-duration:6.8s}#work #orbitTrack .orbit-card:nth-child(8n+6){animation-delay:-0.8s;--r:-1.8deg;--ry:-4deg;animation-duration:7.2s}#work #orbitTrack .orbit-card:nth-child(8n+7){animation-delay:-3s;--r:1deg;--ry:6deg;animation-duration:6.2s}#work #orbitTrack .orbit-card:nth-child(8n+8){animation-delay:-5s;--r:-1.5deg;--ry:-5deg;animation-duration:7.6s}
+@keyframes cardFloat{0%,100%{transform:translateY(0) rotate(var(--r,0deg)) rotateY(var(--ry,0deg))}50%{transform:translateY(-16px) rotate(calc(var(--r,0deg) * -1)) rotateY(calc(var(--ry,0deg) * -1))}}
+@media (prefers-reduced-motion:reduce){#work #orbitTrack .orbit-card{animation:none}}
 #work #orbitTrack .orbit-card .orbit-card-inner{height:100%}
 #work .orbit-tap-hint{display:none!important}
-#work #orbitTrack .orbit-card-art{height:clamp(110px,13vw,170px)!important;overflow:hidden;border-radius:18px 18px 0 0}
+#work #orbitTrack .orbit-card-art{height:clamp(100px,11vw,150px)!important;overflow:hidden;border-radius:18px 18px 0 0}
 #work #orbitTrack .orbit-card-art svg{width:100%;height:100%}
 @media (max-width:1100px){#work #orbitTrack{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){#work #orbitTrack{grid-template-columns:1fr}}
