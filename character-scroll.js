@@ -39,7 +39,10 @@
   const order = [...Array(15).keys(), ...Array.from({length:14}, (_,i)=>13-i), ...Array.from({length:10}, (_,i)=>15+i)];
   let images = [], loaded = false, disposed = false, inView = true, morph = null;
   let target = 0, current = 0, last = 0, raf = 0, width = 0, height = 0;
+  // Cursor gaze: the head and eyes turn toward the pointer (uses the real head-turn poses).
+  let gx = 0, gy = 0, gtx = 0, gty = 0, gaze = 0, pointerSeen = false;
   const clamp = x => Math.min(1, Math.max(0, x));
+  const range = (x,a,b) => Math.min(b, Math.max(a, x));
   const assetBase = new URL('.', scriptURL);
   function createMorph(fields) {
     const surface=document.createElement('canvas'); surface.width=960; surface.height=540;
@@ -97,7 +100,15 @@
     if (!raf && loaded && inView && !document.hidden && !disposed) raf = requestAnimationFrame(tick);
   }
   function draw(progress) {
-    const t = reduced.matches ? 32 : clamp((progress-.10)/.77)*(order.length-1);
+    let t = reduced.matches ? 32 : clamp((progress-.10)/.77)*(order.length-1);
+    if (!reduced.matches && gaze > .001) {
+      // Before the scroll story starts the cursor sweeps the head-turn poses (left -> facing you -> right);
+      // once scrolling, it adds a smaller head sway on top of the scroll animation.
+      const idle = 1 - clamp((progress-.16)/.14);
+      const sweep = 7 + gx*7;                                   // poses 0..14, 7 = facing the camera
+      const eff = idle*sweep + (1-idle)*(t + gx*2);
+      t = range(t + (eff - t)*gaze, 0, order.length-1);
+    }
     const low = Math.floor(t), high = Math.min(order.length-1, low+1), alpha = t-low;
     mctx.clearRect(0,0,960,540);
     const warped=morph && morph.render(order[low],order[high],alpha);
@@ -123,6 +134,8 @@
     ctx.globalAlpha = reduced.matches ? 1 : clamp((progress-.065)/.09)*clamp((1-progress)/.08);
     ctx.drawImage(mix,x,y,w,h);
     ctx.globalAlpha = 1;
+    canvas.style.transform = gaze>.001 && !reduced.matches ? `perspective(900px) rotateY(${(gx*4*gaze).toFixed(2)}deg) rotateX(${(-gy*2*gaze).toFixed(2)}deg) translateX(${(gx*6*gaze).toFixed(1)}px)` : '';
+    canvas.dataset.gaze = gx.toFixed(3);
     canvas.dataset.pose = t.toFixed(3);
     canvas.dataset.progress = progress.toFixed(4);
   }
@@ -133,8 +146,12 @@
     last=now;
     current += (target-current)*(1-Math.exp(-dt/85));
     if (Math.abs(current-target)<.0001) current=target;
+    const gk = 1-Math.exp(-dt/110);
+    gx += (gtx-gx)*gk; gy += (gty-gy)*gk;
+    gaze += ((pointerSeen?1:0)-gaze)*(1-Math.exp(-dt/260));
     draw(current);
-    if (Math.abs(current-target)>.0001 && !reduced.matches) wake();
+    const gazeMoving = Math.abs(gtx-gx)>.002 || Math.abs(gty-gy)>.002 || (pointerSeen && gaze<.995);
+    if ((Math.abs(current-target)>.0001 || gazeMoving) && !reduced.matches) wake();
     else last=0;
   }
   async function init() {
@@ -163,6 +180,12 @@
   });
   observer.observe(stage);
   const resize = new ResizeObserver(size); resize.observe(stage);
+  window.addEventListener('pointermove',e=>{
+    if (e.pointerType==='touch') return;
+    gtx = range((e.clientX/Math.max(1,window.innerWidth))*2-1,-1,1); gty = range((e.clientY/Math.max(1,window.innerHeight))*2-1,-1,1);
+    pointerSeen = true; wake();
+  },{passive:true});
+  document.addEventListener('pointerleave',()=>{gtx=0;gty=0;wake();});
   window.addEventListener('scroll',update,{passive:true});
   window.addEventListener('resize',size,{passive:true});
   document.addEventListener('visibilitychange',()=>{last=0;if(!document.hidden)update();});
