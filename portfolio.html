@@ -261,6 +261,7 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
 @media (prefers-reduced-motion: reduce){ .hero-coderain{display:none;} }
 /* Name section: looping video background replaces the code rain. */
 .hero-bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;filter:brightness(.5) contrast(1.05);}
+.hero-bg-video-2{opacity:0; object-position:50% 30%; filter:brightness(.55) contrast(1.05);}
 .hero-coderain{display:none!important;}
 /* Static fallback for prefers-reduced-motion visitors: the same photo, no
    displacement/breathing/parallax -- shown only via JS once reduced motion
@@ -417,7 +418,7 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
 @keyframes cue{ 0%{top:-100%;} 60%{top:100%;} 100%{top:100%;} }
 @media (prefers-reduced-motion: reduce){ .scroll-cue .line::after{animation:none; top:0;} }
 /* Higher-contrast cue over the video background. */
-.scroll-cue{width:max-content; margin:0 auto; padding:0; background:none; color:#f4f4ee; font-weight:600; letter-spacing:.16em; text-shadow:0 0 8px rgba(0,0,0,.95), 0 1px 3px rgba(0,0,0,.9);}
+.scroll-cue{width:max-content; margin:0 auto; padding:0; background:none; color:#f4f4ee; font-weight:600; letter-spacing:.16em;}
 .scroll-cue .line{background:rgba(255,255,255,.55);}
 @media (max-width:900px){ .hero-journey{height:280vh;} }
 /* ======================================================================
@@ -1326,6 +1327,7 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
            per-glyph brightness ("random light illumination"), independent
            of scroll progress. -->
       <video class="hero-bg-video" src="hero-bg.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+      <video class="hero-bg-video hero-bg-video-2" src="hero-bg-2.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
       <canvas class="hero-coderain" id="heroCodeRain" aria-hidden="true"></canvas>
       <canvas class="hero-canvas" id="heroCanvas" aria-hidden="true"></canvas>
       <img class="hero-photo-static" id="heroPhotoStatic" alt="" aria-hidden="true">
@@ -3806,6 +3808,11 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // the name and 3D bust only fade in once you actually scroll.
       var headingOpacity = clamp((progress-0.10)/0.15,0,1) * exitFade;
       profileHeading.style.setProperty('--profile-heading-opacity', headingOpacity.toFixed(3));
+      // Background cross-fade: canyon video (Hello screen) -> portrait video as the name arrives.
+      var bgMix = clamp((progress-0.06)/0.16,0,1);
+      var bgA = document.querySelector('.hero-bg-video:not(.hero-bg-video-2)'), bgB = document.querySelector('.hero-bg-video-2');
+      if(bgA) bgA.style.opacity = (1-bgMix).toFixed(3);
+      if(bgB) bgB.style.opacity = bgMix.toFixed(3);
       // Flat hero photo fades in alongside the name (same gating as the
       // name, now that there's no WebGL relief/bust driving its own fade).
       var heroPhotoStaticEl = document.getElementById('heroPhotoStatic');
