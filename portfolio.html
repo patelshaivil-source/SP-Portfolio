@@ -319,17 +319,17 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
   opacity:var(--ph-copyop,0);}
 .profile-heading h1{
   font-family:var(--font-display); font-weight:500; text-transform:uppercase;
-  font-size:clamp(1.7rem, 4vw, 3.6rem); letter-spacing:.12em; line-height:1.05; margin:0;
+  font-size:clamp(2.2rem, 5.4vw, 5rem); letter-spacing:.12em; line-height:1.05; margin:0;
   color:rgba(245,241,232,.94);
 }
 .profile-heading .role{
   margin:.6em 0 0; font-family:var(--font-mono); text-transform:uppercase;
-  font-size:clamp(.68rem, .85vw, .82rem); letter-spacing:.14em; color:var(--accent);
+  font-size:clamp(.85rem, 1.15vw, 1.1rem); letter-spacing:.14em; color:var(--accent);
 }
 @media (max-width:900px){
   .profile-heading{top:10vh; right:5vw;}
-  .profile-heading h1{font-size:clamp(1.3rem,6vw,2rem); letter-spacing:.08em;}
-  .profile-heading .role{font-size:.68rem;}
+  .profile-heading h1{font-size:clamp(1.7rem,8vw,2.7rem); letter-spacing:.08em;}
+  .profile-heading .role{font-size:.82rem;}
 }
 .profile-card{
   position:absolute; left:5vw; bottom:8vh; z-index:3; width:clamp(180px, 16vw, 300px); pointer-events:none;
@@ -3816,7 +3816,8 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // The hero scroll was shortened (no hold after the name lands). p2 keeps the original timings, measured in the old scroll distance.
       var heroMobile = window.innerWidth <= 900;
       var p2 = progress * (heroMobile ? 139 : 201) / (heroMobile ? 180 : 280);
-      if(heroCenter) heroCenter.style.setProperty('--cue-opacity', (1 - clamp((p2-0.05)/0.06,0,1)).toFixed(3));
+      var bgMix = clamp((p2-0.04)/0.11,0,1);
+      if(heroCenter) heroCenter.style.setProperty('--cue-opacity', (1 - clamp((p2-0.03)/0.05,0,1)).toFixed(3));
       /* --------------------------------------------------------------
          SCROLL STATES for the Profile scene:
            Arrival        0.00-0.18
@@ -3833,9 +3834,9 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // shows only "WELCOME! / Scroll to explore" (the old behavior);
       // the name and 3D bust only fade in once you actually scroll.
       var headingOpacity = clamp((p2-0.10)/0.15,0,1) * exitFade;
-      var nameOpacity = clamp((p2-0.22)/0.02,0,1) * exitFade;
+      var nameOpacity = (bgMix>=0.999 ? clamp((p2-0.16)/0.02,0,1) : 0) * exitFade;
       // Slide-in: starts fully off-screen (bottom-left), glides diagonally to its top-right resting spot.
-      var wp = clamp((p2-0.22)/0.30,0,1);
+      var wp = clamp((p2-0.16)/0.30,0,1);
       var we = wp < 0.5 ? 4*wp*wp*wp : 1 - Math.pow(-2*wp+2,3)/2;
       profileHeading.style.setProperty('--ph-e', we.toFixed(4));
       // Starts faint and soft at the centre of the screen, travels to the top right, and firms up to its real colour as it lands.
@@ -3845,7 +3846,6 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       profileHeading.style.setProperty('--ph-blur', ((1-we)*3).toFixed(2)+'px');
       profileHeading.style.setProperty('--ph-copyop', (wp>0 ? (1 - clamp((we-0.8)/0.2,0,1)) : 0).toFixed(3));
       // Background cross-fade: canyon video (Hello screen) -> portrait video as the name arrives.
-      var bgMix = clamp((p2-0.08)/0.14,0,1);
       var bgA = document.querySelector('.hero-bg-video:not(.hero-bg-video-2)'), bgB = document.querySelector('.hero-bg-video-2');
       if(bgA) bgA.style.opacity = (1-bgMix).toFixed(3);
       if(bgB) bgB.style.opacity = bgMix.toFixed(3);
@@ -3856,9 +3856,9 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // Hero profile: name/role/monogram card arrives as the portrait
       // nears full resolution, its progress bar mirroring the portrait's
       // own formation arc, and both hold through .85.
-      var cardOpacity = clamp((p2-0.22)/0.10, 0, 1) * exitFade;
+      var cardOpacity = (bgMix>=0.999 ? clamp((p2-0.16)/0.10, 0, 1) : 0) * exitFade;
       profileCard.style.setProperty('--profile-card-opacity', cardOpacity.toFixed(3));
-      var cardProgress = clamp((p2-0.22)/0.30, 0, 1); // fills exactly over the name slide
+      var cardProgress = clamp((p2-0.16)/0.30, 0, 1); // fills exactly over the name slide
       profileCard.style.setProperty('--profile-progress', cardProgress.toFixed(3));
       // Biography reads last, once the hero-profile state is established.
       var bioOpacity = 0; // no scroll left for it: the hero now moves straight on once the name lands
