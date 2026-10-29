@@ -259,6 +259,8 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
   opacity:.55; mix-blend-mode:screen; pointer-events:none; filter:blur(.3px);
 }
 @media (prefers-reduced-motion: reduce){ .hero-coderain{display:none;} }
+/* Name section: the 3D avatar replaces the code-rain background. */
+.hero-coderain{display:none!important;}
 /* Static fallback for prefers-reduced-motion visitors: the same photo, no
    displacement/breathing/parallax -- shown only via JS once reduced motion
    is detected (see buildPhotoRelief's else-branch), left hidden otherwise
