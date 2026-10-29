@@ -26,6 +26,7 @@
   }
   if (document.getElementById('characterScrollCanvas')) return;
   const journey = document.getElementById('heroJourney');
+  const bgVideo = document.querySelector('.hero-bg-video');
   const canvas = document.createElement('canvas');
   canvas.id = 'characterScrollCanvas';
   canvas.setAttribute('role', 'img');
@@ -99,8 +100,6 @@
   function draw(progress) {
     // Welcome text first, then the character story: scroll plays frames 0..144.
     let t = reduced.matches ? 90 : clamp((progress-.10)/.77)*(N-1);
-    // Name section: the avatar is on screen from the first paint, facing the camera, then eases into the scroll story.
-    if (!reduced.matches) t = Math.max(t, REST*(1-clamp((progress-.03)/.07)));
     if (!reduced.matches && gaze > .001) {
       // Early on the cursor sweeps the head-turn frames (left -> facing you -> right); later it adds a gentle sway.
       const idle = 1 - clamp((progress-.16)/.14);
@@ -131,7 +130,9 @@
     const h = height*(mobile ? .51 : .83), w = h*16/9;
     const x = width*(mobile ? .50 : .32)-w/2;
     const y = height*(mobile ? .16 : .17);
-    ctx.globalAlpha = reduced.matches ? 1 : clamp((1-progress)/.08);
+    // Hello-Folks screen keeps the video; it fades out as the character fades in.
+    if (bgVideo) bgVideo.style.opacity = reduced.matches ? '' : (1 - clamp((progress-.05)/.09)).toFixed(3);
+    ctx.globalAlpha = reduced.matches ? 1 : clamp((progress-.065)/.09)*clamp((1-progress)/.08);
     ctx.drawImage(mix,x,y,w,h);
     ctx.globalAlpha = 1;
     canvas.style.transform = gaze>.001 && !reduced.matches ? `perspective(900px) rotateY(${(gx*4*gaze).toFixed(2)}deg) rotateX(${(-gy*2*gaze).toFixed(2)}deg) translateX(${(gx*6*gaze).toFixed(1)}px)` : '';
