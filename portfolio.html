@@ -245,6 +245,8 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
 }
 .hero-journey.is-reduced .hero-stage{position:relative; height:auto; min-height:112vh; padding-bottom:var(--space-6);}
 .hero-canvas{position:absolute; inset:0; width:100%; height:100%; z-index:1;}
+/* Floating-dot particle layer removed from the hero. */
+.hero-canvas{display:none!important;}
 .hero-stage::after{
   content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
   background:
@@ -306,6 +308,8 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
   transform:translateY(calc((1 - var(--profile-heading-opacity, 0)) * 16px));
 }
 .profile-heading .index{display:block; font-family:var(--font-mono); font-size:.7rem; letter-spacing:.18em; color:var(--muted); margin-bottom:.9em;}
+/* Lusion-style warp: the name starts huge, stretches/skews as you scroll, then settles at the top. */
+.profile-heading h1,.profile-heading .role{transform-origin:100% 0; transform:translateY(var(--ph-y,0px)) skewX(var(--ph-skew,0deg)) scale(var(--ph-sx,1), var(--ph-sy,1)); will-change:transform;}
 .profile-heading h1{
   font-family:var(--font-display); font-weight:500; text-transform:uppercase;
   font-size:clamp(1.7rem, 4vw, 3.6rem); letter-spacing:.12em; line-height:1.05; margin:0;
@@ -3807,7 +3811,16 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // shows only "WELCOME! / Scroll to explore" (the old behavior);
       // the name and 3D bust only fade in once you actually scroll.
       var headingOpacity = clamp((progress-0.10)/0.15,0,1) * exitFade;
-      profileHeading.style.setProperty('--profile-heading-opacity', headingOpacity.toFixed(3));
+      var nameOpacity = clamp((progress-0.10)/0.06,0,1) * exitFade;
+      profileHeading.style.setProperty('--profile-heading-opacity', nameOpacity.toFixed(3));
+      // Warp-in: giant -> stretched/skewed -> settled at the top.
+      var wp = clamp((progress-0.10)/0.24,0,1);
+      var we = 1 - Math.pow(1-wp, 3);
+      var wbell = Math.sin(Math.PI*wp);
+      profileHeading.style.setProperty('--ph-sx', (1 + (1-we)*1.7).toFixed(3));
+      profileHeading.style.setProperty('--ph-sy', (1 + wbell*0.45).toFixed(3));
+      profileHeading.style.setProperty('--ph-skew', (-wbell*24).toFixed(2)+'deg');
+      profileHeading.style.setProperty('--ph-y', ((1-we)*46).toFixed(2)+'vh');
       // Background cross-fade: canyon video (Hello screen) -> portrait video as the name arrives.
       var bgMix = clamp((progress-0.06)/0.16,0,1);
       var bgA = document.querySelector('.hero-bg-video:not(.hero-bg-video-2)'), bgB = document.querySelector('.hero-bg-video-2');
