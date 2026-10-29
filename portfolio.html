@@ -3835,9 +3835,9 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       // Hero profile: name/role/monogram card arrives as the portrait
       // nears full resolution, its progress bar mirroring the portrait's
       // own formation arc, and both hold through .85.
-      var cardOpacity = clamp((progress-0.42)/0.18, 0, 1) * exitFade;
+      var cardOpacity = clamp((progress-0.22)/0.10, 0, 1) * exitFade;
       profileCard.style.setProperty('--profile-card-opacity', cardOpacity.toFixed(3));
-      var cardProgress = clamp((progress-0.36)/0.49, 0, 1);
+      var cardProgress = clamp((progress-0.22)/0.30, 0, 1); // fills exactly over the name slide
       profileCard.style.setProperty('--profile-progress', cardProgress.toFixed(3));
       // Biography reads last, once the hero-profile state is established.
       var bioOpacity = clamp((progress-0.55)/0.18, 0, 1) * exitFade;
