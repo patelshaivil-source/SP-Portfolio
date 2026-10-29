@@ -263,7 +263,7 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
 @media (prefers-reduced-motion: reduce){ .hero-coderain{display:none;} }
 /* Name section: looping video background replaces the code rain. */
 .hero-bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none;filter:brightness(.8) contrast(1.05);}
-.hero-bg-video-2{opacity:0; object-position:50% 50%; filter:brightness(.82) contrast(1.05);}
+.hero-bg-video-2{transform:scale(1.25); transform-origin:44% 58%; opacity:0; object-position:50% 50%; filter:brightness(.82) contrast(1.05);}
 .hero-coderain{display:none!important;}
 /* Static fallback for prefers-reduced-motion visitors: the same photo, no
    displacement/breathing/parallax -- shown only via JS once reduced motion
