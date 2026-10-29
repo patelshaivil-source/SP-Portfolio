@@ -308,8 +308,14 @@ body[data-nav-theme="light"] .scroll-rail .fill{background:var(--ink);}
   transform:translateY(calc((1 - var(--profile-heading-opacity, 0)) * 16px));
 }
 .profile-heading .index{display:block; font-family:var(--font-mono); font-size:.7rem; letter-spacing:.18em; color:var(--muted); margin-bottom:.9em;}
-/* Lusion-style: the name enters huge and smeared from the bottom-left, stretches along its path, then resolves at the top right. */
-.profile-heading h1,.profile-heading .role{transform-origin:100% 0; transform:translate(var(--ph-x,0px), var(--ph-y,0px)) skewX(var(--ph-skew,0deg)) scale(var(--ph-sx,1), var(--ph-sy,1)); filter:blur(var(--ph-blur,0px)); will-change:transform,filter;}
+/* "Lines to text": stacked, horizontally stretched copies of the name/subtitle collapse into a single clean line. */
+.profile-heading .role{margin:0;}
+.ph-stack{display:block; position:relative;}
+.ph-stack-role{margin-top:.6em;}
+.ph-stack>.ph-main,.ph-stack>.ph-copy{transform-origin:100% 50%; transform:scaleX(calc(1 + (1 - var(--ph-e,1)) * 0.9));}
+.ph-stack>.ph-copy{position:absolute; left:0; right:0; top:0; margin:0; pointer-events:none;
+  transform:translateY(calc(var(--i) * (1 - var(--ph-e,1)) * 1.02em)) scaleX(calc(1 + (1 - var(--ph-e,1)) * 0.9));
+  opacity:var(--ph-copyop,0);}
 .profile-heading h1{
   font-family:var(--font-display); font-weight:500; text-transform:uppercase;
   font-size:clamp(1.7rem, 4vw, 3.6rem); letter-spacing:.12em; line-height:1.05; margin:0;
@@ -3789,12 +3795,24 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
     resize();
     var scene = registerScene(journey, loop, {threshold:0});
     onRecalc(resize);
+    (function buildLineStacks(){
+      var h1 = profileHeading.querySelector('h1'), role = profileHeading.querySelector('.role');
+      [[h1,''],[role,' ph-stack-role']].forEach(function(p){
+        var el = p[0]; if(!el || el.parentNode.classList.contains('ph-stack')) return;
+        var wrap = document.createElement('span'); wrap.className = 'ph-stack'+p[1];
+        el.parentNode.insertBefore(wrap, el); wrap.appendChild(el); el.classList.add('ph-main');
+        [-2,-1,1,2].forEach(function(n){
+          var c = el.cloneNode(true); c.classList.remove('ph-main'); c.classList.add('ph-copy');
+          c.setAttribute('aria-hidden','true'); c.style.setProperty('--i', n); wrap.appendChild(c);
+        });
+      });
+    })();
     Scroll.add(function(){
       var rect = journey.getBoundingClientRect();
       var total = rect.height - window.innerHeight;
       var raw = total > 0 ? (-rect.top)/total : 0;
       progress = clamp(raw, 0, 1);
-      if(heroCenter) heroCenter.style.setProperty('--cue-opacity', progress > 0.08 ? 0 : 1);
+      if(heroCenter) heroCenter.style.setProperty('--cue-opacity', (1 - clamp((progress-0.05)/0.06,0,1)).toFixed(3));
       /* --------------------------------------------------------------
          SCROLL STATES for the Profile scene:
            Arrival        0.00-0.18
@@ -3815,16 +3833,11 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       profileHeading.style.setProperty('--profile-heading-opacity', nameOpacity.toFixed(3));
       // Slide-in: starts fully off-screen (bottom-left), glides diagonally to its top-right resting spot.
       var wp = clamp((progress-0.22)/0.30,0,1);
-      var we = 1 - Math.pow(1-wp, 3);
-      var wbell = Math.sin(Math.PI*Math.pow(wp,0.8));
-      profileHeading.style.setProperty('--ph-x', (-(1-we)*118).toFixed(2)+'vw');
-      profileHeading.style.setProperty('--ph-y', ((1-we)*88).toFixed(2)+'vh');
-      profileHeading.style.setProperty('--ph-skew', (-wbell*34).toFixed(2)+'deg');
-      profileHeading.style.setProperty('--ph-sx', ((1 + (1-we)*1.5) * (1 + wbell*1.6)).toFixed(3));
-      profileHeading.style.setProperty('--ph-sy', ((1 + (1-we)*1.5) * (1 - wbell*0.18)).toFixed(3));
-      profileHeading.style.setProperty('--ph-blur', (wbell*2.5).toFixed(2)+'px');
+      var we = wp < 0.5 ? 4*wp*wp*wp : 1 - Math.pow(-2*wp+2,3)/2;
+      profileHeading.style.setProperty('--ph-e', we.toFixed(4));
+      profileHeading.style.setProperty('--ph-copyop', (wp>0 ? (1 - clamp((we-0.8)/0.2,0,1)) : 0).toFixed(3));
       // Background cross-fade: canyon video (Hello screen) -> portrait video as the name arrives.
-      var bgMix = clamp((progress-0.05)/0.14,0,1);
+      var bgMix = clamp((progress-0.08)/0.14,0,1);
       var bgA = document.querySelector('.hero-bg-video:not(.hero-bg-video-2)'), bgB = document.querySelector('.hero-bg-video-2');
       if(bgA) bgA.style.opacity = (1-bgMix).toFixed(3);
       if(bgB) bgB.style.opacity = bgMix.toFixed(3);
@@ -3840,7 +3853,7 @@ html,body{overflow-x:clip!important;overflow-y:visible!important}
       var cardProgress = clamp((progress-0.22)/0.30, 0, 1); // fills exactly over the name slide
       profileCard.style.setProperty('--profile-progress', cardProgress.toFixed(3));
       // Biography reads last, once the hero-profile state is established.
-      var bioOpacity = clamp((progress-0.55)/0.18, 0, 1) * exitFade;
+      var bioOpacity = clamp((progress-0.56)/0.16, 0, 1) * exitFade;
       profileBio.style.setProperty('--profile-bio-opacity', bioOpacity.toFixed(3));
     });
   })();
